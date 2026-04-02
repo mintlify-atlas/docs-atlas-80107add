@@ -1,0 +1,151 @@
+---
+title: "Google Sheets"
+description: "Read and write Google Sheets data directly from Appsmith."
+---
+
+The Google Sheets plugin connects to your spreadsheets via OAuth 2.0. After you authorize your Google account, Appsmith can read from and write to any sheet that account can access — without exposing your credentials to app users.
+
+## Connecting Google Sheets
+
+<Steps>
+  <Step title="Open the Data tab">
+    In the App Editor left sidebar, click **Data**, then **+** next to **Datasources**.
+  </Step>
+  <Step title="Select Google Sheets">
+    Choose **Google Sheets** from the plugin list.
+  </Step>
+  <Step title="Choose an access scope">
+    Select the permission level Appsmith needs:
+    - **Read only** — queries can only fetch data.
+    - **Read and write** — queries can insert, update, and delete rows.
+  </Step>
+  <Step title="Authorize your Google account">
+    Click **Connect Google Account**. A Google OAuth consent screen opens in a new tab. Sign in and grant the requested permissions.
+  </Step>
+  <Step title="Save the datasource">
+    After authorization, you are redirected back to Appsmith. Click **Save**. The datasource is now ready to use.
+  </Step>
+</Steps>
+
+<Note>
+The Google Sheet you want to query must be accessible to the authorized Google account. If the sheet is owned by someone else, ask them to share it (at minimum viewer access) with the account you used to authorize the datasource.
+</Note>
+
+## Supported operations
+
+| Operation | Description |
+|---|---|
+| **Fetch sheets** | Lists all sheets (tabs) within a spreadsheet |
+| **Fetch sheet rows** | Returns rows from a sheet as an array of objects |
+| **Insert row** | Appends a new row to a sheet |
+| **Update row** | Updates a specific row identified by a row index |
+| **Delete row** | Deletes a specific row identified by a row index |
+
+## Query configuration
+
+Every Google Sheets query requires:
+
+1. **Spreadsheet URL** — the full URL of the Google Sheet (e.g. `https://docs.google.com/spreadsheets/d/...`).
+2. **Sheet name** — the name of the specific tab within the spreadsheet.
+3. **Operation** — one of the operations listed above.
+
+For **Fetch sheet rows**, you can also set:
+- **Table heading row index** — which row contains column headers (default: `1`).
+- **Query limit** — maximum number of rows to return.
+
+For **Insert row** and **Update row**, provide a **Row object** — a JSON object whose keys match the header row of the sheet.
+
+## Fetching rows
+
+**Query configuration:**
+- Operation: Fetch Sheet Rows
+- Spreadsheet URL: `https://docs.google.com/spreadsheets/d/your-sheet-id/edit`
+- Sheet name: `Inventory`
+- Table heading row index: `1`
+
+**Bind to a Table widget:**
+
+```javascript
+{{ getSheetData.data }}
+```js
+
+Each row is returned as an object keyed by column header:
+
+```json
+[
+  { "SKU": "WIDGET-01", "Name": "Blue Widget", "Stock": 42 },
+  { "SKU": "WIDGET-02", "Name": "Red Widget",  "Stock": 7  }
+]
+```
+
+## Inserting a row
+
+**Query configuration:**
+- Operation: Insert Row
+- Spreadsheet URL: *(your sheet URL)*
+- Sheet name: `Orders`
+- Row object:
+
+```json
+{
+  "Customer": "{{ nameInput.text }}",
+  "Email": "{{ emailInput.text }}",
+  "Product": "{{ productSelect.selectedOptionValue }}",
+  "Quantity": {{ qtyInput.text }},
+  "Date": "{{ moment().format('YYYY-MM-DD') }}"
+}
+```js
+
+Call this query from a **Submit** button's **onClick** handler. The new row is appended after the last existing row.
+
+## Updating a row
+
+**Query configuration:**
+- Operation: Update Row
+- Sheet name: `Orders`
+- Row index: `{{ Table1.selectedRow.rowIndex + 2 }}` (add 2 to account for the 1-indexed header row)
+- Row object:
+
+```json
+{
+  "Status": "{{ statusSelect.selectedOptionValue }}",
+  "Updated": "{{ moment().format('YYYY-MM-DD') }}"
+}
+```
+
+<Note>
+Google Sheets row indices are 1-based, and row 1 is reserved for the header. Add 2 to a 0-based widget row index to get the correct sheet row number.
+</Note>
+
+## Deleting a row
+
+**Query configuration:**
+- Operation: Delete Row
+- Sheet name: `Orders`
+- Row index: `{{ Table1.selectedRow.rowIndex + 2 }}`
+
+## Displaying data in a Table widget
+
+1. Drop a **Table** widget onto the canvas.
+2. Set its **Table data** property to `{{ getSheetData.data }}`.
+3. Appsmith auto-generates columns from the object keys in the first row.
+
+To filter or transform data before binding:
+
+```javascript
+{{
+  getSheetData.data.filter(row => row.Status === "active")
+}}
+```js
+
+## Limitations
+
+- Google Sheets is not designed for high-frequency writes. For apps that write more than a few rows per second, use a database datasource instead.
+- The plugin does not support formulas — inserted rows contain literal values only.
+- Spreadsheet size limits are enforced by Google: 10 million cells per spreadsheet.
+
+## Related
+
+- [Datasources overview](/datasources/overview)
+- [Database connections](/datasources/databases)
+- [CRUD app guide](/guides/crud-app)

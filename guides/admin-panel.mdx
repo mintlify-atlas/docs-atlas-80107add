@@ -1,0 +1,117 @@
+---
+title: "Building an Admin Panel"
+description: "Create a full-featured admin panel with user management, data tables, and CRUD operations."
+---
+
+An admin panel lets you manage your application's data through a secure, role-aware interface. This guide walks through connecting to PostgreSQL, building a data table, and wiring up an edit form with role-based access control.
+
+<Steps>
+  <Step title="Create a new app">
+    Log in to Appsmith and click **New** in your workspace. Give the app a name such as "Admin Panel". You'll land on the canvas with an empty page ready to build.
+
+    For an overview of the canvas and widget palette, see [Building UI](/core-concepts/building-ui).
+  </Step>
+
+  <Step title="Connect to a PostgreSQL datasource">
+    1. Click **+** next to **Datasources** in the left sidebar.
+    2. Select **PostgreSQL** from the list of integrations.
+    3. Enter your host, port, database name, username, and password.
+    4. Click **Test** to verify connectivity, then **Save**.
+
+    Your datasource is now available for all queries in this app. For more on datasource configuration, see [Databases](/datasources/databases).
+  </Step>
+
+  <Step title="Add a Table widget and bind it to a SELECT query">
+    1. From **Queries**, click **New Query** and select your PostgreSQL datasource.
+    2. Name the query `getUsers` and enter:
+
+    ```sql
+    SELECT id, name, email, role, created_at
+    FROM users
+    ORDER BY created_at DESC
+    LIMIT 50;
+    ```
+
+    3. Click **Run** to confirm it returns data.
+    4. Drag a **Table** widget onto the canvas from the widget panel.
+    5. In the Table's **Table data** property, bind the query result:
+
+    ```javascript
+    {{getUsers.data}}
+    ```
+
+    The table populates immediately with your query results. Column names are derived from the SQL field aliases.
+  </Step>
+
+  <Step title="Add a Form modal for editing records">
+    1. Drag a **Modal** widget onto the canvas. Name it `editModal`.
+    2. Inside the modal, add a **Form** widget containing:
+       - **Text Input** for `name` — default value: `{{usersTable.selectedRow.name}}`
+       - **Text Input** for `email` — default value: `{{usersTable.selectedRow.email}}`
+       - A hidden **Text** widget or Input to carry the row `id`: `{{usersTable.selectedRow.id}}`
+    3. Add an **Edit** button column to the Table widget (via **Add column → Button**). Set its **onClick** to:
+
+    ```javascript
+    {{showModal('editModal')}}
+    ```
+
+    <Tip>
+      `usersTable.selectedRow` is automatically populated when a user clicks a row. Binding form default values to `selectedRow` fields means the form pre-fills with the selected record's data without any extra JavaScript.
+    </Tip>
+  </Step>
+
+  <Step title="Wire up an UPDATE query to the form submit">
+    1. Create a new query named `updateUser`:
+
+    ```sql
+    UPDATE users
+    SET
+      name  = '{{editForm.data.name}}',
+      email = '{{editForm.data.email}}'
+    WHERE id = {{usersTable.selectedRow.id}};
+    ```
+
+    2. Select the **Submit** button inside the form. Set its **onClick** to run the query chain:
+
+    ```javascript
+    {{updateUser.run(() => {
+      closeModal('editModal');
+      getUsers.run();
+    }, () => showAlert('Update failed', 'error'))}}
+    ```
+
+    This runs the UPDATE, closes the modal on success, and refreshes the table data.
+  </Step>
+
+  <Step title="Add role-based visibility to the Edit button">
+    You can restrict the Edit button to admin users by binding the column button's **Visible** property to the current user's role.
+
+    In Appsmith, `appsmith.user` exposes the logged-in user's profile. If you store roles in your users table, fetch the current user's role in a query named `getCurrentUser`:
+
+    ```sql
+    SELECT role FROM users WHERE email = '{{appsmith.user.email}}';
+    ```
+
+    Then bind the Edit button's **Visible** property:
+
+    ```javascript
+    {{getCurrentUser.data[0]?.role === 'admin'}}
+    ```
+
+    The Edit button is now hidden for non-admin viewers. For further permission patterns, see [User Management](/guides/user-management).
+  </Step>
+</Steps>
+
+## Related guides
+
+<CardGroup>
+  <Card title="CRUD App" icon="database" href="/guides/crud-app">
+    Full create, read, update, and delete patterns for any table.
+  </Card>
+  <Card title="User Management" icon="users" href="/guides/user-management">
+    Workspace roles, app sharing, and access control.
+  </Card>
+  <Card title="Connecting data" icon="plug" href="/core-concepts/connecting-data">
+    All supported datasource types and query options.
+  </Card>
+</CardGroup>

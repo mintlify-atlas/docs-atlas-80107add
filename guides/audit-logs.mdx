@@ -1,0 +1,92 @@
+---
+title: "Audit Logs"
+description: "Track user activity and changes across your Appsmith instance."
+---
+
+Audit logs give administrators a tamper-evident record of who did what and when across the Appsmith instance. They are available on **Business and Enterprise plans** for self-hosted deployments.
+
+<Note>
+  Audit logs are an Enterprise/Business plan feature. They are not available on the Community Edition or on Appsmith Cloud's free tier. Contact your account representative to enable them on your self-hosted instance.
+</Note>
+
+## What audit logs capture
+
+Appsmith records the following categories of events:
+
+| Category | Events logged |
+|----------|---------------|
+| **Authentication** | Successful logins, failed login attempts, logouts, SSO authentication events |
+| **User management** | User invitations, role changes, user removal, group membership changes |
+| **App changes** | App creation, deletion, publishing, Git commits and merges |
+| **Datasource changes** | Datasource creation, configuration edits, deletion, credential updates |
+| **Query execution** | Every query run in a deployed (published) app, including the executing user and timestamp |
+| **Admin settings** | Changes to instance configuration, SSO settings, authentication provider updates |
+
+Query execution logs capture the query name and datasource but do not log the raw SQL or returned data by default, to avoid storing sensitive information.
+
+## Accessing audit logs
+
+1. Log in as an **Administrator**.
+2. Go to **Admin Settings** (gear icon, bottom-left of the Appsmith home screen).
+3. Select **Audit Logs** from the left navigation.
+
+The audit log viewer displays a paginated list of events in reverse chronological order.
+
+## Log entry format
+
+Each audit log entry contains:
+
+| Field | Description |
+|-------|-------------|
+| **Timestamp** | ISO 8601 datetime of the event (UTC) |
+| **User** | Email address of the user who performed the action |
+| **Action** | Verb describing the event (e.g., `APPLICATION_CREATED`, `DATASOURCE_DELETED`, `USER_LOGGED_IN`) |
+| **Resource type** | The type of object affected (e.g., `Application`, `Datasource`, `User`) |
+| **Resource name** | The name of the specific object affected |
+| **Workspace** | The workspace context in which the event occurred |
+| **IP address** | The originating IP address of the request |
+
+Example entry:
+
+```json
+{
+  "timestamp": "2024-11-15T14:32:07Z",
+  "user": "alice@example.com",
+  "action": "DATASOURCE_UPDATED",
+  "resourceType": "Datasource",
+  "resourceName": "Production PostgreSQL",
+  "workspaceId": "ws_01j3k...",
+  "ipAddress": "203.0.113.42"
+}
+```js
+
+## Filtering logs
+
+Use the filter controls at the top of the Audit Logs page to narrow results:
+
+- **Date range**: Filter events between two timestamps.
+- **User**: Show only events by a specific user (enter their email).
+- **Action type**: Filter to a specific event category (authentication, datasource changes, etc.).
+- **Resource**: Filter to events affecting a specific app or datasource by name.
+
+Filters can be combined. The result set updates as you apply each filter.
+
+## Exporting logs
+
+Click **Export** to download the current filtered view as a CSV file. The CSV contains all fields in the log entry format described above, suitable for import into SIEM tools or spreadsheet analysis.
+
+For automated log forwarding to an external system (e.g., Splunk, Datadog, or an S3 bucket), contact Appsmith support for enterprise log streaming options.
+
+## Related guides
+
+<CardGroup>
+  <Card title="User Management" icon="users" href="/guides/user-management">
+    Workspace roles, app sharing, and removing members.
+  </Card>
+  <Card title="SSO Setup" icon="key" href="/guides/sso-setup">
+    Centralize authentication to reduce credential-based audit events.
+  </Card>
+  <Card title="Deployment configuration" icon="server" href="/deployment/configuration">
+    Environment variables and self-hosted instance settings.
+  </Card>
+</CardGroup>

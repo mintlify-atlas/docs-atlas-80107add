@@ -1,0 +1,136 @@
+---
+title: "Widgets Overview"
+description: "45+ pre-built UI components for building internal tools."
+---
+
+Widgets are the building blocks of every Appsmith application. Each widget is a self-contained UI component with its own properties, events, and bindings. You can combine widgets freely to build admin panels, dashboards, CRUD apps, and more without writing HTML or CSS.
+
+## Adding a widget
+
+<Steps>
+  <Step title="Open the widget panel">
+    Click the **+** icon in the left sidebar to open the widget panel. All available widgets are listed here, grouped by category.
+  </Step>
+  <Step title="Drag onto the canvas">
+    Drag any widget from the panel onto the canvas. Appsmith snaps widgets to a grid so they align automatically.
+  </Step>
+  <Step title="Resize and position">
+    Click and drag the widget's edges or corners to resize it. Drag the widget itself to reposition it.
+  </Step>
+  <Step title="Configure properties">
+    Click the widget to open its property pane on the right. Set static values or use `{{ }}` bindings to connect live data.
+  </Step>
+</Steps>
+
+## Property binding with `{{ }}`
+
+Every widget property accepts dynamic values using double-curly-brace syntax. Inside `{{ }}` you can write any valid JavaScript expression — reference query results, other widget values, or computed logic.
+
+```js
+// Bind a table to a query result
+{{ GetUsers.data }}
+
+// Bind a text widget to a specific field
+{{ GetUsers.data[0].email }}
+
+// Conditional value
+{{ Checkbox1.isChecked ? "Active" : "Inactive" }}
+
+// Filtered data
+{{ GetOrders.data.filter(row => row.status === "pending") }}
+```js
+
+<Note>
+  Bindings are re-evaluated automatically whenever the referenced query or widget value changes. You do not need to refresh the page or trigger the update manually.
+</Note>
+
+For more on writing expressions, computed properties, and JS Objects, see [Writing JavaScript](/core-concepts/writing-javascript).
+
+## Widget categories
+
+<CardGroup cols={2}>
+  <Card title="Form Inputs" icon="keyboard" href="/widgets/form-inputs">
+    Collect user input with text fields, dropdowns, date pickers, checkboxes, switches, sliders, and more.
+  </Card>
+  <Card title="Data Display" icon="table" href="/widgets/data-display">
+    Present data with tables, charts, text, images, stat boxes, progress bars, and lists.
+  </Card>
+  <Card title="Layout" icon="layout-panel-left" href="/widgets/layout">
+    Organize your UI with containers, modals, tabs, forms, dividers, and iframes.
+  </Card>
+  <Card title="Building UI" icon="paintbrush" href="/core-concepts/building-ui">
+    Learn how to arrange widgets, manage the canvas, and create responsive layouts.
+  </Card>
+</CardGroup>
+
+## All widgets
+
+The following widgets are available in Appsmith. Each is listed under its primary category.
+
+### Form inputs
+
+| Widget | Purpose |
+|---|---|
+| Input | Single-line and multi-line text, number, password, and email fields |
+| Select | Single-option dropdown |
+| Multi-select | Multiple-option dropdown |
+| DatePicker | Date and time selection |
+| Checkbox | Boolean toggle |
+| Checkbox Group | Multiple checkboxes |
+| Switch | Toggle switch |
+| Switch Group | Multiple toggle switches |
+| Radio Group | Single-select radio buttons |
+| Phone Input | Phone number with dial code |
+| Currency Input | Monetary value with currency code |
+| Rich Text Editor | Formatted text input |
+| FilePicker | File upload |
+| Camera | Capture photos from device camera |
+| Code Scanner | Scan QR and barcodes |
+| Rate | Star rating input |
+| Slider (Number) | Single-value numeric slider |
+| Slider (Range) | Dual-handle range slider |
+| Slider (Category) | Discrete category selection |
+| JSON Form | Auto-generated form from a JSON schema |
+
+### Data display
+
+| Widget | Purpose |
+|---|---|
+| Table | Paginated, sortable, filterable data grid |
+| Chart | Line, bar, pie, area, and scatter charts |
+| Text | Static or dynamic text with Markdown support |
+| Image | Display images from a URL or base64 |
+| Video | Embed video playback |
+| Audio | Embed audio playback |
+| Stat Box | Single metric with label |
+| Progress Bar | Linear progress indicator |
+| Progress (Circular) | Circular progress indicator |
+| List | Repeating item template |
+| Map | Interactive map with markers |
+| Map Chart | Choropleth map chart |
+| Document Viewer | Render PDFs and documents |
+| Icon | Display an icon |
+
+### Layout
+
+| Widget | Purpose |
+|---|---|
+| Container | Group and visually frame other widgets |
+| Modal | Overlay dialog triggered by user actions |
+| Tabs | Tabbed content switcher |
+| Form | Validated form wrapper with submit handling |
+| Divider | Horizontal or vertical visual separator |
+| Iframe | Embed external web content |
+
+### Buttons and actions
+
+| Widget | Purpose |
+|---|---|
+| Button | Trigger actions or submit forms |
+| Icon Button | Compact button with an icon only |
+| Button Group | Row of related action buttons |
+| Menu Button | Dropdown menu of actions |
+
+<Tip>
+  Can't find a widget that fits your use case? Use the [Custom Widget](/guides/custom-widgets) to build and embed your own React component directly in Appsmith.
+</Tip>

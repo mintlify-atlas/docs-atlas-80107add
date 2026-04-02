@@ -1,0 +1,149 @@
+---
+title: "Building a Dashboard"
+description: "Visualize metrics and data with charts, stat boxes, and dynamic filters."
+---
+
+Dashboards surface aggregated metrics for quick decision-making. This guide walks through writing aggregate SQL queries, binding results to Chart and Stat Box widgets, and adding a date-range filter that re-runs queries automatically.
+
+<Steps>
+  <Step title="Connect a datasource">
+    If you haven't already, add a datasource from the left sidebar. This guide uses PostgreSQL, but the widget bindings work identically with MySQL, MongoDB, and any REST API that returns numeric data.
+
+    See [Databases](/datasources/databases) for the full list of supported integrations.
+  </Step>
+
+  <Step title="Write an aggregate SQL query">
+    Create a query named `getOrderMetrics`. Aggregate functions give you the numbers that power your KPIs and charts:
+
+    ```sql
+    SELECT
+      DATE_TRUNC('day', created_at)      AS day,
+      COUNT(*)                           AS total_orders,
+      SUM(amount)                        AS total_revenue,
+      AVG(amount)                        AS avg_order_value
+    FROM orders
+    WHERE
+      created_at >= '{{startDatePicker.selectedDate}}'
+      AND created_at <  '{{endDatePicker.selectedDate}}'
+    GROUP BY DATE_TRUNC('day', created_at)
+    ORDER BY day ASC;
+    ```
+
+    The `{{startDatePicker.selectedDate}}` and `{{endDatePicker.selectedDate}}` bindings connect this query to the filter controls you'll add in step 5.
+  </Step>
+
+  <Step title="Add a Chart widget and bind series data">
+    1. Drag a **Chart** widget onto the canvas.
+    2. Set the **Chart type** to **Line Chart** (or Bar Chart for period comparisons).
+    3. In the **Series data** property, bind the query result. Appsmith's Chart widget expects an array of `{x, y}` objects:
+
+    ```javascript
+    {{getOrderMetrics.data.map(row => ({
+      x: row.day,
+      y: row.total_revenue
+    }))}}
+    ```
+
+    4. Set the **x-axis label** to `"Date"` and the **y-axis label** to `"Revenue (USD)"`.
+    5. To add a second series (e.g., order count), click **Add Series** and bind:
+
+    ```javascript
+    {{getOrderMetrics.data.map(row => ({
+      x: row.day,
+      y: row.total_orders
+    }))}}
+    ```
+  </Step>
+
+  <Step title="Add Stat Box widgets for KPI numbers">
+    Stat Box widgets display a single prominent number with a label and optional trend indicator.
+
+    1. Drag a **Stat Box** widget onto the canvas.
+    2. Set **Text** (the main value) to the aggregated total:
+
+    ```javascript
+    {{"$" + getOrderMetrics.data
+        .reduce((sum, row) => sum + row.total_revenue, 0)
+        .toLocaleString()}}
+    ```
+
+    3. Set the **Label** to `"Total Revenue"`.
+    4. Repeat for other KPIs: total orders, average order value, etc. Arrange them in a row at the top of the dashboard using the layout grid.
+
+    For layout guidance, see [Layout widgets](/widgets/layout).
+  </Step>
+
+  <Step title="Add a date range filter with DatePicker widgets">
+    1. Drag two **DatePicker** widgets onto the canvas. Name them `startDatePicker` and `endDatePicker`.
+    2. Set **startDatePicker** default date to 30 days ago:
+
+    ```javascript
+    {{moment().subtract(30, 'days').toDate()}}
+    ```
+
+    3. Set **endDatePicker** default date to today:
+
+    ```javascript
+    {{moment().toDate()}}
+    ```
+
+    4. Add labels above each picker ("From" and "To") using **Text** widgets.
+  </Step>
+
+  <Step title="Re-run the query when the filter changes">
+    Wire the DatePicker widgets to automatically re-fetch data when the user changes either date.
+
+    In `startDatePicker`'s **onDateSelected** property:
+
+    ```javascript
+    {{getOrderMetrics.run()}}
+    ```
+
+    In `endDatePicker`'s **onDateSelected** property:
+
+    ```javascript
+    {{getOrderMetrics.run()}}
+    ```
+
+    Now when a user selects a new date, the query re-runs immediately and all bound widgets — the chart and stat boxes — update in place with no page reload.
+
+    <Tip>
+      If the dashboard has multiple queries (e.g., separate queries for revenue, users, and inventory), create a JS Object with a `refreshAll` function and call it from both DatePicker events:
+
+      ```javascript
+      export default {
+        refreshAll() {
+          getOrderMetrics.run();
+          getUserSignups.run();
+          getInventoryLevels.run();
+        }
+      }
+      ```
+    </Tip>
+  </Step>
+</Steps>
+
+## Chart series data format
+
+The Chart widget accepts an array of objects. Each series must follow this shape:
+
+```javascript
+[
+  { x: "2024-01-01", y: 1200 },
+  { x: "2024-01-02", y: 980 },
+  { x: "2024-01-03", y: 1540 }
+]
+```js
+
+For pie/donut charts, use `{ x: "Label", y: number }` where `x` becomes the segment label.
+
+## Related guides
+
+<CardGroup>
+  <Card title="CRUD App" icon="database" href="/guides/crud-app">
+    Add the ability to create and edit the records behind your metrics.
+  </Card>
+  <Card title="Connecting data" icon="plug" href="/core-concepts/connecting-data">
+    Query configuration, response handling, and transformations.
+  </Card>
+</CardGroup>

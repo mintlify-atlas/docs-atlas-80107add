@@ -1,0 +1,162 @@
+---
+title: "REST API"
+description: "Connect to any REST API with headers, auth, and dynamic bodies."
+---
+
+The REST API plugin lets you connect to any HTTP or HTTPS endpoint. You can configure shared settings (base URL, default headers, authentication) at the datasource level and override them per query.
+
+## Datasource configuration
+
+Create one REST API datasource per external service. Settings defined here apply to every query that uses this datasource.
+
+| Field | Description |
+|---|---|
+| **Base URL** | Common URL prefix, e.g. `https://api.example.com/v1` |
+| **Headers** | Default headers sent with every request (e.g. `Content-Type: application/json`) |
+| **Query params** | Default query parameters appended to every request |
+| **Authentication type** | See [Authentication](#authentication) below |
+| **Send Appsmith signature** | Adds an HMAC header so your server can verify the request origin |
+
+## Authentication
+
+<Tabs>
+  <Tab title="None">
+    No authentication headers are added. Use this for public APIs or when you manage auth manually via headers.
+  </Tab>
+  <Tab title="API Key">
+    Appsmith adds the key to a request **header** or a **query parameter**.
+
+    | Field | Example |
+    |---|---|
+    | Add to | Header or Query param |
+    | Key name | `X-API-Key` or `api_key` |
+    | Value | `sk-abc123...` |
+
+    The key value is stored encrypted on the server.
+  </Tab>
+  <Tab title="Bearer token">
+    Appsmith adds `Authorization: Bearer <token>` to every request.
+
+    Enter the token value in the **Bearer token** field. Rotate the token by editing the datasource without touching any queries.
+  </Tab>
+  <Tab title="Basic Auth">
+    Appsmith base64-encodes `username:password` and adds the `Authorization: Basic` header automatically.
+
+    | Field | Description |
+    |---|---|
+    | Username | API username |
+    | Password | API password (stored encrypted) |
+  </Tab>
+  <Tab title="OAuth 2.0">
+    Appsmith supports the **Client Credentials** and **Authorization Code** grant types.
+
+    **Client Credentials fields:**
+
+    | Field | Description |
+    |---|---|
+    | Access token URL | Token endpoint of the auth server |
+    | Client ID | Your app's client identifier |
+    | Client secret | Stored encrypted |
+    | Scope | Space-separated list of scopes |
+    | Header prefix | Usually `Bearer` |
+
+    **Authorization Code** additionally requires a redirect URI and will prompt users to authorize via their browser before the first query runs.
+  </Tab>
+</Tabs>
+
+## Creating a REST API datasource and first query
+
+<Steps>
+  <Step title="Open the Data tab">
+    In the App Editor left sidebar, click **Data**, then **+** next to **Datasources**.
+  </Step>
+  <Step title="Select REST API">
+    Choose **REST API** from the plugin list.
+  </Step>
+  <Step title="Enter the base URL">
+    Type the common URL prefix for the API, for example `https://api.example.com/v1`. Add any default headers such as `Content-Type: application/json`.
+  </Step>
+  <Step title="Configure authentication">
+    Select an **Authentication type** and fill in the required credentials. Click **Test** to confirm Appsmith can reach the endpoint, then click **Save**.
+  </Step>
+  <Step title="Create a query">
+    Click **+ New query** under the saved datasource. The query editor opens.
+  </Step>
+  <Step title="Configure the request">
+    Choose an HTTP **Method** (GET, POST, PUT, PATCH, DELETE), enter the **path** relative to the base URL (e.g. `/users`), and add any per-request headers, params, or a body.
+  </Step>
+  <Step title="Run and bind">
+    Click **Run**. The response appears in the preview panel. Bind results to a widget with `{{ queryName.data }}`.
+  </Step>
+</Steps>
+
+## Query configuration
+
+Each query can override or extend the datasource settings:
+
+| Field | Description |
+|---|---|
+| **Method** | GET, POST, PUT, PATCH, DELETE |
+| **Path** | URL path appended to the base URL, e.g. `/users/{{ userId }}` |
+| **Headers** | Per-request headers; merged with datasource headers |
+| **Params** | Per-request query parameters |
+| **Body** | Raw JSON, form data, multipart, or binary |
+
+## Dynamic request body
+
+Use `{{ }}` bindings anywhere in the body to inject widget values at runtime:
+
+```json
+{
+  "name": "{{ nameInput.text }}",
+  "email": "{{ emailInput.text }}",
+  "role": "{{ roleSelect.selectedOptionValue }}",
+  "metadata": {
+    "source": "appsmith",
+    "createdAt": "{{ moment().toISOString() }}"
+  }
+}
+```
+
+Dynamic path parameters work the same way:
+
+```js
+/users/{{ Table1.selectedRow.id }}/status
+```
+
+## Importing a cURL command
+
+If you already have a working cURL command, paste it directly into Appsmith to create the query automatically:
+
+1. Open a query editor under a REST API datasource.
+2. Click **Import cURL** (the terminal icon next to the method selector).
+3. Paste your cURL command and click **Import**.
+
+Appsmith parses the URL, method, headers, and body from the command and fills the query form. Review the generated fields before running.
+
+## Handling the response
+
+`{{ queryName.data }}` contains the parsed response body. Common patterns:
+
+```javascript
+// Bind an array response to a Table widget
+{{ getUsers.data }}
+
+// Access a nested field
+{{ getUser.data.profile.avatarUrl }}
+
+// Map an array to Select widget options
+{{ getCountries.data.map(c => ({ label: c.name, value: c.code })) }}
+```
+
+For non-2xx responses, `{{ queryName.isError }}` is `true` and `{{ queryName.responseMeta.status }}` holds the HTTP status code.
+
+<Note>
+Appsmith makes REST API requests from the server, not the browser. CORS restrictions do not apply. Ensure your server's IP allow-list includes the Appsmith server's egress IP.
+</Note>
+
+## Related
+
+- [Datasources overview](/datasources/overview)
+- [Google Sheets](/datasources/google-sheets)
+- [AI integration guide](/guides/ai-integration)

@@ -1,0 +1,201 @@
+---
+title: "Layout Widgets"
+description: "Organize your app with containers, modals, tabs, and forms."
+---
+
+Layout widgets do not display data on their own — they structure and frame other widgets. Use them to group related controls, separate concerns across tabs, collect validated input, and embed external content.
+
+<AccordionGroup>
+
+  <Accordion title="Container">
+    The Container widget is a rectangular grouping widget. Place other widgets inside it to visually associate them, apply a shared background color and border, and move or resize them as a unit.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `isVisible` | boolean | Show or hide the container and all its children |
+    | `backgroundColor` | string | Fill color (hex or `transparent`) |
+    | `borderColor` | string | Border color (hex) |
+    | `borderWidth` | number | Border thickness in pixels |
+    | `borderRadius` | string | Corner rounding (e.g., `4px`, `50%`) |
+    | `boxShadow` | string | Shadow preset or custom CSS shadow value |
+
+    **Binding example**
+
+    ```js
+    // Show the container only when a row is selected
+    {{ Table1.selectedRow !== undefined }}
+    ```
+
+    <Tip>
+      Containers are the primary tool for building reusable card layouts. Nest a Stat Box, a Chart, and a Text widget inside a Container and copy it across your dashboard canvas.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Modal">
+    The Modal widget is an overlay dialog that appears on top of the canvas. It is hidden by default and must be opened programmatically using the `showModal` action.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `isVisible` | boolean | Controlled by `showModal`/`closeModal` actions |
+    | `canOutsideClickClose` | boolean | Close the modal when clicking outside it |
+    | `size` | string | `MODAL_SMALL`, `MODAL_MEDIUM`, or `MODAL_LARGE` |
+    | `scrollContents` | boolean | Make modal body scrollable |
+
+    **Events**
+
+    - `onClose` — fires when the modal is dismissed
+
+    **Opening and closing**
+
+    Use the **Show Modal** action in any widget's event handler to open a modal by name. Use **Close Modal** or call `closeModal('ModalName')` to dismiss it.
+
+    ```js
+    // In a Button's onClick event handler (action selector)
+    showModal('ConfirmDeleteModal')
+
+    // In a JS Object
+    showModal('EditUserModal');
+    ```
+
+    **Binding example**
+
+    ```js
+    // Pre-fill an Input inside the modal with a selected row value
+    {{ Table1.selectedRow.email }}
+
+    // Run a query and then close the modal on success
+    // (configured in the query's onSuccess event)
+    closeModal('EditUserModal');
+    ```
+  </Accordion>
+
+  <Accordion title="Tabs">
+    The Tabs widget splits the canvas into named sections, showing one at a time. Use it to reduce visual clutter on pages with many widgets by grouping related content behind a tab label.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `tabs` | array | Array of tab objects with `id`, `label`, and `isVisible` |
+    | `defaultTab` | string | Label of the tab visible on page load |
+    | `selectedTab` | string | Label of the currently active tab (read-only) |
+    | `isVisible` | boolean | Show or hide the entire tabs widget |
+    | `showTabs` | boolean | Hide tab labels (useful for programmatic switching) |
+
+    **Events**
+
+    - `onTabSelected` — fires when the user switches to a different tab
+
+    **Binding example**
+
+    ```js
+    // Show or hide content based on the active tab
+    {{ Tabs1.selectedTab === "Analytics" }}
+
+    // Programmatically switch tabs in a JS Object
+    setCurrentTab('Tabs1', 'Settings');
+    ```
+  </Accordion>
+
+  <Accordion title="Form">
+    The Form widget wraps input widgets in a validated submission container. It provides a built-in Submit button, tracks validity state across all child inputs, and can reset all fields automatically after a successful submission.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `isVisible` | boolean | Show or hide the form |
+    | `isValid` | boolean | `true` when all required child inputs pass validation (read-only) |
+    | `resetOnSubmit` | boolean | Clear all inputs after the form is submitted |
+    | `backgroundColor` | string | Form background fill color |
+    | `borderRadius` | string | Corner rounding |
+
+    **Events**
+
+    - `onSubmit` — fires when the Submit button is clicked and the form is valid
+
+    **Binding example**
+
+    ```js
+    // Disable the Submit button until the form is valid
+    // Set the Button's `isDisabled` property to:
+    {{ !Form1.isValid }}
+
+    // In the Form's onSubmit event, run a query then reset
+    // Configure via the event handler UI:
+    // 1. Execute query: InsertUser
+    // 2. On success: Reset Widget → Form1
+    ```
+
+    <Note>
+      Each input widget inside the Form must have `isRequired` or a `regex` set for the `isValid` flag to reflect validation state. A form with no required fields is always considered valid.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Divider">
+    The Divider widget renders a thin horizontal or vertical line that visually separates sections of the canvas. It has no interactivity — it is purely decorative.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `orientation` | string | `horizontal` or `vertical` |
+    | `strokeStyle` | string | `solid`, `dashed`, or `dotted` |
+    | `dividerColor` | string | Line color (hex) |
+    | `capType` | string | End cap style: `nc` (none), `arrow`, or `dot` |
+    | `isVisible` | boolean | Show or hide the divider |
+
+    **Binding example**
+
+    ```js
+    // Show the divider only when a section is visible
+    {{ Switch1.isSwitchedOn }}
+    ```
+  </Accordion>
+
+  <Accordion title="Iframe">
+    The Iframe widget embeds an external web page or application inside a sandboxed frame on the canvas. Bind the `source` property to any public URL.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `source` | string | URL of the page to embed |
+    | `srcDoc` | string | Inline HTML to render instead of a URL |
+    | `title` | string | Accessible title for the frame |
+    | `isVisible` | boolean | Show or hide the iframe |
+    | `onMessageReceived` | event | Fires when the embedded page calls `window.parent.postMessage` |
+
+    **Events**
+
+    - `onURLChanged` — fires when the `source` binding evaluates to a new URL
+    - `onSrcDocChanged` — fires when the `srcDoc` content changes
+    - `onMessageReceived` — fires on `postMessage` from the embedded content
+
+    **Binding example**
+
+    ```js
+    // Bind the source to a selected row value
+    {{ "https://maps.example.com/embed?location=" + Table1.selectedRow.address }}
+
+    // Embed a dynamic report URL
+    {{ "https://analytics.internal/report/" + Select1.selectedOptionValue }}
+    ```
+
+    <Warning>
+      Some websites block embedding via the `X-Frame-Options` or `Content-Security-Policy` headers. If the iframe appears blank, check the browser console for frame-related errors.
+    </Warning>
+  </Accordion>
+
+</AccordionGroup>
+
+## Next steps
+
+- [Form Input Widgets](/widgets/form-inputs) — add inputs inside your containers and forms
+- [Data Display Widgets](/widgets/data-display) — render query results inside layout containers
+- [Building UI](/core-concepts/building-ui) — learn about the canvas, layers, and responsive layout
+- [Guides: Admin Panel](/guides/admin-panel) — end-to-end walkthrough that uses containers, modals, and tabs

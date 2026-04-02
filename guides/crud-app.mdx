@@ -1,0 +1,168 @@
+---
+title: "Building a CRUD App"
+description: "Build create, read, update, and delete functionality for any database table."
+---
+
+CRUD (create, read, update, delete) is the foundation of most internal tools. This guide builds a complete CRUD interface for a `users` table in PostgreSQL, covering paginated reads, modal forms, inline editing, and delete confirmation.
+
+<Steps>
+  <Step title="Design the data model">
+    Start with a clear schema before writing queries. Here is the example `users` table used throughout this guide:
+
+    ```sql
+    CREATE TABLE users (
+      id         SERIAL PRIMARY KEY,
+      name       VARCHAR(255) NOT NULL,
+      email      VARCHAR(255) UNIQUE NOT NULL,
+      role       VARCHAR(50)  DEFAULT 'viewer',
+      active     BOOLEAN      DEFAULT true,
+      created_at TIMESTAMP    DEFAULT NOW()
+    );
+    ```
+
+    Knowing the column names and types up front lets you write accurate bindings in Appsmith widgets.
+  </Step>
+
+  <Step title="Create the READ query with pagination">
+    Create a query named `getUsers`. Use `LIMIT` and `OFFSET` to support pagination:
+
+    ```sql
+    SELECT id, name, email, role, active, created_at
+    FROM users
+    ORDER BY created_at DESC
+    LIMIT {{usersTable.pageSize}}
+    OFFSET {{(usersTable.pageNo - 1) * usersTable.pageSize}};
+    ```
+
+    Enable **Server-side pagination** on the Table widget and set **onPageChange** to `{{getUsers.run()}}`. Appsmith automatically increments `usersTable.pageNo` when the user navigates pages.
+
+    To get the total row count for the pagination footer, create a companion query:
+
+    ```sql
+    SELECT COUNT(*) AS total FROM users;
+    ```
+
+    Bind it to the Table's **Total records** property: `{{getUsersCount.data[0].total}}`.
+  </Step>
+
+  <Step title="Build the list view with the Table widget">
+    1. Drag a **Table** widget onto the canvas.
+    2. Set **Table data** to `{{getUsers.data}}`.
+    3. Enable **Server-side pagination** and set **onPageChange** to `{{getUsers.run()}}`.
+    4. Add action columns for Edit and Delete buttons (covered in steps 5 and 6).
+
+    For an overview of all widget options, see [Data display widgets](/widgets/data-display).
+  </Step>
+
+  <Step title="CREATE query and form">
+    1. Create a **Modal** widget named `createModal`. Inside it, place a **Form** with inputs for `name`, `email`, and `role`.
+    2. Add a **New User** button above the table. Set its **onClick** to `{{showModal('createModal')}}`.
+    3. Create a query named `createUser`:
+
+    ```sql
+    INSERT INTO users (name, email, role)
+    VALUES (
+      '{{createForm.data.name}}',
+      '{{createForm.data.email}}',
+      '{{createForm.data.role}}'
+    );
+    ```
+
+    4. Set the form's **Submit** button **onClick** to chain: run the insert, close the modal, and refresh the table:
+
+    ```javascript
+    {{createUser.run(() => {
+      closeModal('createModal');
+      getUsers.run();
+    }, () => showAlert('Failed to create user', 'error'))}}
+    ```
+  </Step>
+
+  <Step title="UPDATE query and edit form">
+    1. Create a **Modal** widget named `editModal`. Add a form with the same fields as the create form, but pre-fill them from the selected table row:
+       - Name input default: `{{usersTable.selectedRow.name}}`
+       - Email input default: `{{usersTable.selectedRow.email}}`
+       - Role select default: `{{usersTable.selectedRow.role}}`
+    2. Add an **Edit** button column in the table. Set its **onClick** to `{{showModal('editModal')}}`.
+    3. Create a query named `updateUser`:
+
+    ```sql
+    UPDATE users
+    SET
+      name  = '{{editForm.data.name}}',
+      email = '{{editForm.data.email}}',
+      role  = '{{editForm.data.role}}'
+    WHERE id = {{usersTable.selectedRow.id}};
+    ```
+
+    4. Set the edit form's **Submit** button **onClick**:
+
+    ```javascript
+    {{updateUser.run(() => {
+      closeModal('editModal');
+      getUsers.run();
+    }, () => showAlert('Update failed', 'error'))}}
+    ```
+
+    <Tip>
+      Binding form input default values to `usersTable.selectedRow` means the form always reflects the current row. No extra JavaScript is needed to populate the fields.
+    </Tip>
+  </Step>
+
+  <Step title="DELETE query and confirmation dialog">
+    1. Add a **Delete** button column to the table.
+    2. Create a query named `deleteUser`:
+
+    ```sql
+    DELETE FROM users
+    WHERE id = {{usersTable.selectedRow.id}};
+    ```
+
+    3. Set the Delete button's **onClick** to show a confirmation before running:
+
+    ```javascript
+    {{showAlert('Are you sure?', 'warning')}}
+    ```
+
+    For a proper confirmation dialog, use a **Modal** with Cancel and Confirm buttons. Set the Confirm button's **onClick**:
+
+    ```javascript
+    {{deleteUser.run(() => {
+      closeModal('confirmDeleteModal');
+      getUsers.run();
+    }, () => showAlert('Delete failed', 'error'))}}
+    ```
+
+    This pattern prevents accidental deletions and gives users a clear recovery path.
+  </Step>
+</Steps>
+
+## Query chaining pattern
+
+The sequence **run query → close modal → refresh table** appears in every CRUD operation. Here is the general pattern:
+
+```javascript
+{{mutationQuery.run(
+  // onSuccess
+  () => {
+    closeModal('modalName');
+    getUsers.run();
+    showAlert('Done!', 'success');
+  },
+  // onError
+  () => showAlert(mutationQuery.responseMeta.error.message, 'error')
+)}}
+```js
+
+For more JavaScript patterns, see [Writing JavaScript](/core-concepts/writing-javascript).
+
+## Related guides
+
+<CardGroup>
+  <Card title="Admin Panel" icon="shield" href="/guides/admin-panel">
+    Add role-based visibility and user management to a CRUD interface.
+  </Card>
+  <Card title="Dashboard" icon="chart-bar" href="/guides/dashboard">
+    Visualize aggregated data from your tables.
+  </Card>
+</CardGroup>

@@ -1,0 +1,292 @@
+---
+title: "Form Input Widgets"
+description: "Collect user input with text fields, selects, date pickers, and more."
+---
+
+Form input widgets let users enter and submit data. Connect their values to queries or JS Objects using `{{ }}` bindings, and handle events to run queries, navigate pages, or show alerts.
+
+<Tip>
+  Wrap related inputs in a [Form widget](/widgets/layout) to get built-in validation, a submit button, and an optional reset-on-success behavior.
+</Tip>
+
+<AccordionGroup>
+
+  <Accordion title="Input">
+    The Input widget accepts free-form text, numbers, passwords, and email addresses. It is the most general-purpose entry field in Appsmith.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `inputType` | string | `TEXT`, `NUMBER`, `PASSWORD`, or `EMAIL` |
+    | `text` | string | Current value entered by the user |
+    | `defaultText` | string | Pre-filled value on page load |
+    | `placeholder` | string | Hint text shown when the field is empty |
+    | `isRequired` | boolean | Prevents form submission when empty |
+    | `isDisabled` | boolean | Renders the field as read-only |
+    | `maxChars` | number | Maximum character limit (text mode) |
+    | `regex` | string | Custom validation pattern |
+    | `errorMessage` | string | Message shown when validation fails |
+
+    **Events**
+
+    - `onChange` — fires whenever the value changes
+    - `onSubmit` — fires when the user presses Enter
+
+    **Binding example**
+
+    ```js
+    // Read the current value in a query parameter
+    {{ Input1.text }}
+
+    // Use it in a filter
+    {{ GetUsers.data.filter(u => u.name.includes(Input1.text)) }}
+    ```
+
+    <Note>
+      Use `inputType: PASSWORD` to mask characters. The raw value is still accessible via `Input1.text` in server-side bindings.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Select">
+    The Select widget renders a single-choice dropdown. Options are provided as an array of `{ label, value }` objects — either hardcoded or bound to query data.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `options` | array | `[{ label: string, value: any }]` |
+    | `defaultOptionValue` | any | Value selected on page load |
+    | `selectedOptionValue` | any | Currently selected value (read-only) |
+    | `isRequired` | boolean | Marks selection as mandatory |
+    | `isSearchable` | boolean | Adds a search box inside the dropdown |
+    | `placeholderText` | string | Hint shown when nothing is selected |
+
+    **Events**
+
+    - `onOptionChange` — fires when the user picks a different option
+
+    **Binding example**
+
+    ```js
+    // Populate options from a query
+    {{ GetStatuses.data.map(s => ({ label: s.name, value: s.id })) }}
+
+    // Read the selected value in another widget or query
+    {{ Select1.selectedOptionValue }}
+    ```
+  </Accordion>
+
+  <Accordion title="DatePicker">
+    The DatePicker widget provides a calendar UI for selecting dates and optionally times. The selected value is exposed as an ISO 8601 string.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `selectedDate` | string | Currently selected date (ISO 8601) |
+    | `defaultDate` | string | Date selected on page load |
+    | `dateFormat` | string | Display format (e.g., `YYYY-MM-DD`, `DD/MM/YYYY`) |
+    | `timePrecision` | string | `NONE`, `MINUTE`, or `SECOND` |
+    | `minDate` | string | Earliest selectable date |
+    | `maxDate` | string | Latest selectable date |
+    | `isRequired` | boolean | Marks the field as mandatory |
+
+    **Events**
+
+    - `onDateSelected` — fires when the user picks a date
+
+    **Binding example**
+
+    ```js
+    // Pass the selected date to a query parameter
+    {{ DatePicker1.selectedDate }}
+
+    // Format it for display
+    {{ moment(DatePicker1.selectedDate).format("MMM D, YYYY") }}
+    ```
+  </Accordion>
+
+  <Accordion title="Checkbox">
+    The Checkbox widget is a single boolean toggle rendered as a labelled checkbox. Use it to capture yes/no or agree/disagree inputs.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `isChecked` | boolean | Current checked state |
+    | `defaultCheckedState` | boolean | State on page load |
+    | `label` | string | Text displayed next to the checkbox |
+    | `isRequired` | boolean | Requires the box to be checked before form submission |
+    | `isDisabled` | boolean | Prevents interaction |
+
+    **Events**
+
+    - `onChange` — fires when the checked state changes
+
+    **Binding example**
+
+    ```js
+    // Show a section only when the checkbox is checked
+    {{ Checkbox1.isChecked }}
+
+    // Pass the value to an update query
+    {{ Checkbox1.isChecked ? 1 : 0 }}
+    ```
+  </Accordion>
+
+  <Accordion title="Switch">
+    The Switch widget is a toggle control that represents a boolean on/off state. It is functionally similar to a Checkbox but uses a sliding toggle UI.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `isSwitchedOn` | boolean | Current toggle state |
+    | `defaultSwitchState` | boolean | State on page load |
+    | `label` | string | Text displayed next to the toggle |
+    | `isDisabled` | boolean | Prevents interaction |
+
+    **Events**
+
+    - `onChange` — fires when the toggle state changes
+
+    **Binding example**
+
+    ```js
+    // Conditionally show a widget based on toggle state
+    {{ Switch1.isSwitchedOn }}
+
+    // Use in a query condition
+    {{ Switch1.isSwitchedOn ? "enabled" : "disabled" }}
+    ```
+  </Accordion>
+
+  <Accordion title="Radio Group">
+    The Radio Group widget renders a set of mutually exclusive radio buttons. Only one option can be selected at a time.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `options` | array | `[{ label: string, value: any }]` |
+    | `defaultSelectedValue` | any | Option selected on page load |
+    | `selectedOptionValue` | any | Currently selected value (read-only) |
+    | `isRequired` | boolean | Requires a selection before form submission |
+    | `isInline` | boolean | Render options horizontally instead of vertically |
+
+    **Events**
+
+    - `onSelectionChange` — fires when the user picks a different option
+
+    **Binding example**
+
+    ```js
+    // Hardcoded options
+    [
+      { label: "Low", value: "low" },
+      { label: "Medium", value: "medium" },
+      { label: "High", value: "high" }
+    ]
+
+    // Read the selected value
+    {{ RadioGroup1.selectedOptionValue }}
+    ```
+  </Accordion>
+
+  <Accordion title="Phone Input">
+    The Phone Input widget combines a dial code selector with a phone number field. It automatically formats numbers based on the selected country code.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `text` | string | Full phone number including dial code |
+    | `dialCode` | string | Selected country dial code (e.g., `+1`) |
+    | `defaultDialCode` | string | Dial code shown on page load |
+    | `allowDialCodeChange` | boolean | Lets users change the country code |
+    | `isRequired` | boolean | Marks the field as mandatory |
+
+    **Events**
+
+    - `onChange` — fires when the number or dial code changes
+
+    **Binding example**
+
+    ```js
+    // Full number with dial code
+    {{ PhoneInput1.text }}
+
+    // Dial code only
+    {{ PhoneInput1.dialCode }}
+    ```
+  </Accordion>
+
+  <Accordion title="Currency Input">
+    The Currency Input widget accepts monetary values and lets users select or fix a currency. It formats the number according to locale conventions.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `text` | string | Raw numeric value as a string |
+    | `value` | number | Numeric value without formatting |
+    | `currencyCode` | string | ISO 4217 code (e.g., `USD`, `EUR`) |
+    | `decimals` | number | Number of decimal places (0–10) |
+    | `allowCurrencyChange` | boolean | Lets users pick a different currency |
+    | `isRequired` | boolean | Marks the field as mandatory |
+
+    **Events**
+
+    - `onChange` — fires when the value or currency changes
+
+    **Binding example**
+
+    ```js
+    // Numeric value for calculations
+    {{ CurrencyInput1.value }}
+
+    // Pass to an insert query
+    {{ CurrencyInput1.value }}  // e.g., 1499.99
+    {{ CurrencyInput1.currencyCode }}  // e.g., "USD"
+    ```
+  </Accordion>
+
+  <Accordion title="Multi-select">
+    The Multi-select widget is a dropdown that allows users to pick more than one option at the same time. Selected values are returned as an array.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `options` | array | `[{ label: string, value: any }]` |
+    | `defaultOptionValues` | array | Values selected on page load |
+    | `selectedOptionValues` | array | Array of currently selected values (read-only) |
+    | `selectedOptionLabels` | array | Array of currently selected labels (read-only) |
+    | `isRequired` | boolean | Requires at least one selection |
+    | `isSearchable` | boolean | Adds a search box inside the dropdown |
+    | `placeholderText` | string | Hint shown when nothing is selected |
+
+    **Events**
+
+    - `onOptionChange` — fires when the selection changes
+
+    **Binding example**
+
+    ```js
+    // Populate from a query
+    {{ GetTags.data.map(t => ({ label: t.name, value: t.id })) }}
+
+    // Pass selected values to a query (e.g., SQL IN clause)
+    {{ MultiSelect1.selectedOptionValues }}
+    // Result: [1, 4, 7]
+    ```
+  </Accordion>
+
+</AccordionGroup>
+
+## Next steps
+
+- [Data Display Widgets](/widgets/data-display) — show the data your forms collect
+- [Layout Widgets](/widgets/layout) — wrap inputs in containers, forms, and modals
+- [Connecting data](/core-concepts/connecting-data) — wire widgets to databases and APIs

@@ -1,0 +1,40 @@
+---
+title: "Cloud vs. Self-Hosted"
+description: "Choose the right deployment option for your team."
+---
+
+Appsmith is available as a managed cloud service and as a self-hosted installation you run on your own infrastructure. Both options give you the full Appsmith feature set. The right choice depends on your data residency requirements, maintenance preferences, and budget.
+
+## Comparison
+
+| | **Appsmith Cloud** | **Self-Hosted** |
+|---|---|---|
+| **Setup** | Sign up and start building immediately — no infrastructure required | Deploy on your own servers using Docker, Kubernetes, or a cloud provider |
+| **Data residency** | Data passes through Appsmith-managed infrastructure | All data stays within your network; you control storage and encryption |
+| **Updates** | Automatic; always on the latest version | Manual; you control when to upgrade |
+| **Pricing** | Free tier available; paid plans for larger teams | Free and open-source (Community Edition); Enterprise Edition available |
+| **Best for** | Teams that want to move fast without managing infrastructure | Teams with strict compliance requirements or air-gapped environments |
+
+## Choose your path
+
+<CardGroup cols={2}>
+  <Card title="Appsmith Cloud" icon="cloud" href="/quickstart">
+    Get started in seconds. No installation needed — create a free account and start building immediately.
+  </Card>
+  <Card title="Self-Hosted" icon="server" href="/deployment/docker">
+    Deploy Appsmith on your own infrastructure. Full control over data, configuration, and upgrades.
+  </Card>
+</CardGroup>
+
+## Self-hosted deployment options
+
+Appsmith supports several self-hosted installation methods:
+
+- **Docker** (recommended for most teams) — Deploy using a single `docker-compose.yml` file. See the [Docker deployment guide](/deployment/docker).
+- **Kubernetes** — Deploy on a Kubernetes cluster for production-scale workloads with high availability. See the [Kubernetes deployment guide](/deployment/kubernetes).
+- **AWS** — Launch an Appsmith AMI on Amazon EC2 directly from the AWS Marketplace. See [cloud provider guides](/deployment/cloud-providers).
+- **DigitalOcean** — Deploy a pre-built Appsmith droplet from the DigitalOcean Marketplace. See [cloud provider guides](/deployment/cloud-providers).
+
+<Note>
+  All self-hosted deployments use the same Community Edition image: `appsmith/appsmith-ce`. Enterprise features are unlocked with a license key. See [configuration options](/deployment/configuration) for details.
+</Note>

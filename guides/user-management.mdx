@@ -1,0 +1,89 @@
+---
+title: "User Management"
+description: "Manage workspace members, roles, and app-level permissions."
+---
+
+Appsmith's permission model has two levels: **workspace roles** that control what a member can do across the entire workspace, and **app-level sharing** that lets you give specific people access to individual apps.
+
+<Note>
+  Appsmith Cloud has user limits based on your plan tier. Self-hosted instances on the Community Edition have no user limit, but some features (user groups, audit logs, SSO) require a Business or Enterprise license.
+</Note>
+
+## Workspace roles
+
+Every member of a workspace is assigned one of three roles:
+
+| Role | Permissions |
+|------|-------------|
+| **Administrator** | Manage members, roles, datasources, and all apps in the workspace. Full access to Admin Settings. |
+| **Developer** | Create and edit apps, create and modify datasources, invite viewers. Cannot manage workspace members or access Admin Settings. |
+| **Viewer** | View and use published apps. Cannot edit apps or access the editor. |
+
+Roles apply across the entire workspace. To give someone narrower access — for example, edit access to one app but view-only on others — use app-level sharing instead.
+
+## Inviting users to a workspace
+
+1. From the workspace home screen, click **Share** (top-right).
+2. Enter the user's email address.
+3. Select a role: **Administrator**, **Developer**, or **Viewer**.
+4. Click **Invite**.
+
+The invited user receives an email with a link to accept the invitation. If `APPSMITH_SIGNUP_DISABLED` is set on your self-hosted instance, only users who receive an invitation can create an account. See [Custom Authentication](/guides/custom-authentication) for signup control options.
+
+## App-level sharing
+
+Share a specific app without changing the user's workspace role:
+
+1. Open the app in the editor.
+2. Click **Share** in the top-right toolbar.
+3. Enter the user's email and select **Can view** or **Can edit**.
+4. Click **Invite**.
+
+Users with app-level access can only see apps they have been explicitly invited to, even if they are workspace members with a Viewer role.
+
+To make an app publicly accessible (no login required):
+
+1. Open **Share**.
+2. Toggle **Make the application public**.
+
+Public apps are viewable by anyone with the URL without an Appsmith account.
+
+## Managing user groups (Enterprise)
+
+On Enterprise plans, you can create user groups to assign roles and app access in bulk:
+
+1. Go to **Admin Settings** → **Groups**.
+2. Click **Create group** and give it a name (e.g., `Support Team`).
+3. Add members to the group by email.
+4. Assign the group a workspace role or grant it access to specific apps.
+
+Changes to a group's permissions propagate to all members immediately. This is the recommended approach for managing access for teams of five or more users.
+
+## Removing users
+
+**From a workspace:**
+
+1. Go to **Workspace Settings** → **Members**.
+2. Find the user and click the role dropdown next to their name.
+3. Select **Remove user**.
+
+The user loses access to all apps in the workspace immediately.
+
+**Revoking app-level access:**
+
+1. Open the app's **Share** dialog.
+2. Find the user in the list and click **Remove**.
+
+## Related guides
+
+<CardGroup>
+  <Card title="Custom Authentication" icon="lock" href="/guides/custom-authentication">
+    OAuth, JWT, and controlling who can sign up.
+  </Card>
+  <Card title="SSO Setup" icon="key" href="/guides/sso-setup">
+    Centralize login with SAML or OIDC for your organization.
+  </Card>
+  <Card title="Audit Logs" icon="file-text" href="/guides/audit-logs">
+    Track member activity and permission changes over time.
+  </Card>
+</CardGroup>

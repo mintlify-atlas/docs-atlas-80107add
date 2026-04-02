@@ -1,0 +1,89 @@
+---
+title: "Version Control with Git"
+description: "Connect your Appsmith app to a Git repository for version control and collaboration."
+---
+
+Appsmith integrates directly with Git, giving every app a full commit history, branch-based development workflow, and the ability to collaborate through pull requests. Each Appsmith branch maps 1:1 to a Git branch in your remote repository.
+
+<Note>
+  Supported Git providers: **GitHub**, **GitLab**, and **Bitbucket**. Any provider that accepts SSH key authentication will work.
+</Note>
+
+<Steps>
+  <Step title="Open App Settings and navigate to Git">
+    From the app editor, click the gear icon (**App Settings**) in the bottom-left corner, then select the **Git** tab. If Git has not been configured for this app, you'll see the initial connection screen.
+
+    For a full overview of App Settings, see [App Settings](/core-concepts/app-settings).
+  </Step>
+
+  <Step title="Generate a deploy key and add it to your repository">
+    Click **Generate deploy key**. Appsmith creates an SSH key pair and displays the public key.
+
+    Add this public key to your repository as a deploy key with **write access**:
+
+    - **GitHub**: Repository → Settings → Deploy keys → Add deploy key
+    - **GitLab**: Repository → Settings → Repository → Deploy keys
+    - **Bitbucket**: Repository → Repository settings → Access keys
+
+    Write access is required so Appsmith can push commits and branches.
+  </Step>
+
+  <Step title="Connect the repository URL">
+    Enter your repository's SSH URL (e.g., `git@github.com:your-org/your-repo.git`) in the **Repository URL** field and click **Connect**.
+
+    Appsmith clones the repository and switches the app into Git-connected mode. The commit and branch controls appear in the bottom toolbar of the editor.
+  </Step>
+
+  <Step title="Commit your changes">
+    After making changes to the app, click the **Commit & Push** button in the bottom toolbar.
+
+    Enter a descriptive commit message:
+
+    ```
+    Add user management table and edit modal
+    ```
+
+    Click **Commit**. Appsmith commits the app's JSON definition (pages, queries, widgets, and datasource configurations) to the current branch.
+  </Step>
+
+  <Step title="Push to remote">
+    Click **Push** to send the committed changes to the remote repository. If your remote branch is ahead, Appsmith will prompt you to pull first to avoid conflicts.
+
+    Pushing makes your changes available to collaborators and triggers any CI/CD pipelines you have configured on the repository.
+  </Step>
+
+  <Step title="Create a branch for feature development">
+    Click the branch name in the bottom toolbar to open the branch switcher. Click **Create branch** and enter a name following your team's convention (e.g., `feature/add-audit-logs`).
+
+    Appsmith creates the branch both locally and on the remote. All subsequent commits go to this branch, leaving `main` (or `master`) unaffected until you merge.
+
+    Branches in Appsmith behave exactly like Git branches: each branch maintains its own state of the app. Switching branches in Appsmith switches the editor to that branch's version of the app.
+  </Step>
+
+  <Step title="Merge via pull request">
+    When your feature is ready, open a pull request in your Git provider (GitHub, GitLab, or Bitbucket) from your feature branch into `main`. After the PR is reviewed and merged, switch back to `main` in the Appsmith branch switcher and click **Pull** to sync the merged changes.
+
+    Appsmith reflects the merged state of the app on the `main` branch automatically after the pull.
+  </Step>
+</Steps>
+
+## Importing an app from an existing Git repository
+
+If an Appsmith app already exists in a Git repository, you can connect a new Appsmith workspace to it rather than starting from scratch:
+
+1. From the workspace home screen, click **Import** → **Import from Git repository**.
+2. Paste the SSH URL and add the generated deploy key to the repository.
+3. Appsmith imports all pages, queries, and widget configurations from the repository.
+
+This is the standard workflow for migrating apps between Appsmith instances (e.g., staging → production).
+
+## Related guides
+
+<CardGroup>
+  <Card title="App Settings" icon="gear" href="/core-concepts/app-settings">
+    Environment variables, app themes, and page settings.
+  </Card>
+  <Card title="Deployment" icon="server" href="/deployment/docker">
+    Self-host Appsmith with Docker or Kubernetes.
+  </Card>
+</CardGroup>

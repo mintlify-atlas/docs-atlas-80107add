@@ -1,0 +1,137 @@
+---
+title: "SSO Setup"
+description: "Configure SAML or OIDC single sign-on for your Appsmith instance."
+---
+
+Single sign-on (SSO) lets your users authenticate with your existing identity provider (IdP) instead of managing separate Appsmith credentials. Appsmith supports **SAML 2.0** and **OpenID Connect (OIDC)**.
+
+<Warning>
+  SSO is a **Business and Enterprise plan** feature. It is not available on the Community Edition or on Appsmith Cloud's free tier. You must be running a licensed self-hosted instance to configure SSO.
+</Warning>
+
+<Note>
+  If SSO fails — for example, because the IdP is unreachable or a certificate has expired — Appsmith administrators can still log in using email/password as a fallback. Ensure at least one administrator account uses email/password authentication so you are never locked out.
+</Note>
+
+Supported identity providers include: **Okta**, **Azure Active Directory**, **Google Workspace**, **Ping Identity**, and any IdP that implements SAML 2.0 or OIDC.
+
+<Tabs>
+  <Tab title="SAML 2.0">
+    <Steps>
+      <Step title="Get the Appsmith SAML metadata URL">
+        1. Log in as an Administrator and go to **Admin Settings** → **Authentication**.
+        2. Select **SAML 2.0**.
+        3. Copy the **Service Provider Metadata URL** shown on the page. It follows the format:
+           ```
+           https://<your-appsmith-domain>/saml/metadata
+           ```
+        This URL describes your Appsmith instance to the identity provider as a SAML service provider.
+      </Step>
+
+      <Step title="Configure the identity provider">
+        In your IdP's admin console, create a new SAML application. The exact steps vary by provider:
+
+        **Okta:**
+        1. Go to **Applications** → **Create App Integration** → **SAML 2.0**.
+        2. In the **SAML Settings** step, set:
+           - **Single sign-on URL**: `https://<your-appsmith-domain>/saml/login`
+           - **Audience URI (SP Entity ID)**: `https://<your-appsmith-domain>/saml/metadata`
+        3. Under **Attribute Statements**, map `email` to `user.email` and `name` to `user.displayName`.
+        4. Save the application and download the **IdP metadata XML**.
+
+        **Azure AD:**
+        1. Go to **Enterprise Applications** → **New Application** → **Create your own application**.
+        2. Choose **Integrate any other application you don't find in the gallery**.
+        3. Under **Single sign-on**, select **SAML**.
+        4. Set the **Identifier (Entity ID)** and **Reply URL** using the values from Appsmith's metadata page.
+        5. Download the **Federation Metadata XML**.
+
+        **Google Workspace:**
+        1. In the Admin console, go to **Apps** → **Web and mobile apps** → **Add app** → **Add custom SAML app**.
+        2. Download the **IdP metadata** on the first screen, then set the ACS URL and Entity ID from Appsmith.
+      </Step>
+
+      <Step title="Enter IdP metadata in Appsmith Admin Settings">
+        Back in Appsmith **Admin Settings** → **Authentication** → **SAML 2.0**:
+
+        1. Paste the IdP metadata XML into the **IdP Metadata** field, or enter the IdP metadata URL directly if your provider exposes one.
+        2. Click **Save**.
+        3. Click **Test Configuration** to verify the connection before enabling it for all users.
+
+        Once saved, the Appsmith login page shows a **Sign in with SSO** button alongside the email/password option.
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="OIDC">
+    <Steps>
+      <Step title="Register Appsmith as an application in your IdP">
+        Create a new OAuth 2.0 / OIDC application in your identity provider.
+
+        **Okta:**
+        1. Go to **Applications** → **Create App Integration** → **OIDC - OpenID Connect** → **Web Application**.
+        2. Set the **Sign-in redirect URI**:
+           ```
+           https://<your-appsmith-domain>/login/oauth2/code/oidc
+           ```
+        3. Set the **Sign-out redirect URI** to your Appsmith home URL.
+        4. Note the **Client ID** and **Client Secret**.
+
+        **Azure AD:**
+        1. Go to **App registrations** → **New registration**.
+        2. Set the **Redirect URI** (Web platform):
+           ```
+           https://<your-appsmith-domain>/login/oauth2/code/oidc
+           ```
+        3. Under **Certificates & secrets**, create a new client secret.
+        4. Note the **Application (client) ID** and the secret value. The **Well-known URL** for Azure is:
+           ```
+           https://login.microsoftonline.com/<tenant-id>/v2.0/.well-known/openid-configuration
+           ```
+
+        **Google Workspace:**
+        1. In the Google Cloud Console, go to **APIs & Services** → **Credentials** → **Create OAuth client ID** (Web application).
+        2. Add `https://<your-appsmith-domain>/login/oauth2/code/oidc` as an authorized redirect URI.
+      </Step>
+
+      <Step title="Get the Client ID, Client Secret, and well-known URL">
+        You need three values from your IdP to configure OIDC in Appsmith:
+
+        | Value | Description |
+        |-------|-------------|
+        | **Client ID** | The unique identifier for your Appsmith registration in the IdP |
+        | **Client Secret** | The secret credential; treat it like a password |
+        | **Well-known / Discovery URL** | The OIDC discovery endpoint (ends in `/.well-known/openid-configuration`) |
+
+        Most providers publish their discovery URL in their documentation. For Okta it is `https://<your-okta-domain>/.well-known/openid-configuration`.
+      </Step>
+
+      <Step title="Configure OIDC in Appsmith Admin Settings">
+        1. In Appsmith, go to **Admin Settings** → **Authentication** → **OIDC**.
+        2. Enter the **Client ID**, **Client Secret**, and **Well-known URL**.
+        3. Set **Scope** to `openid profile email` (add any additional scopes your IdP requires).
+        4. Click **Save**.
+        5. Click **Test Configuration** to confirm Appsmith can reach your IdP and exchange tokens successfully.
+
+        After saving, a **Sign in with SSO** button appears on the Appsmith login page.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Related guides
+
+<CardGroup>
+  <Card title="Custom Authentication" icon="lock" href="/guides/custom-authentication">
+    OAuth with Google and GitHub, JWT forwarding, and signup controls.
+  </Card>
+  <Card title="User Management" icon="users" href="/guides/user-management">
+    Workspace roles, user groups, and app-level permissions.
+  </Card>
+  <Card title="Audit Logs" icon="file-text" href="/guides/audit-logs">
+    Track SSO login events and authentication changes.
+  </Card>
+  <Card title="Deployment configuration" icon="server" href="/deployment/configuration">
+    Environment variables for self-hosted instances.
+  </Card>
+</CardGroup>

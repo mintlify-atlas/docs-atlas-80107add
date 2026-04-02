@@ -1,0 +1,200 @@
+---
+title: "Kubernetes"
+description: "Deploy Appsmith on Kubernetes using Helm."
+---
+
+Appsmith publishes an official Helm chart that manages all required components: the Appsmith application, MongoDB (replica set), Redis, and optionally PostgreSQL (for Keycloak SSO) and Prometheus. The chart name is `appsmith` and the current chart version is `3.6.9`.
+
+<Note>
+Minimum cluster requirements: **2 vCPU** and **4 GB RAM** available across the nodes that will run Appsmith workloads. For production use, 4 vCPU and 8 GB RAM are recommended.
+</Note>
+
+## Prerequisites
+
+- A running Kubernetes cluster (1.22 or later)
+- [`kubectl`](https://kubernetes.io/docs/tasks/tools/) configured against the cluster
+- [Helm 3](https://helm.sh/docs/intro/install/) installed locally
+- A default `StorageClass` available in the cluster for persistent volumes
+
+## Installing Appsmith
+
+<Steps>
+  <Step title="Add the Appsmith Helm repository">
+    ```bash
+    helm repo add appsmith https://helm.appsmith.com
+    helm repo update
+    ```
+  </Step>
+  <Step title="Install the chart">
+    ```bash
+    helm install appsmith appsmith/appsmith \
+      --namespace appsmith \
+      --create-namespace
+    ```
+
+    This deploys Appsmith with the default `values.yaml` settings, which enables bundled MongoDB and Redis.
+  </Step>
+  <Step title="Wait for pods to become ready">
+    ```bash
+    kubectl get pods -n appsmith -w
+    ```
+
+    All pods should reach `Running` status within 3–5 minutes. MongoDB starts as a 2-node replica set (`rs0`).
+  </Step>
+  <Step title="Get the external IP or hostname">
+    ```bash
+    kubectl get svc -n appsmith
+    ```
+
+    By default the service type is `ClusterIP`. To expose Appsmith externally, either change the service type (see below) or set up an Ingress.
+  </Step>
+  <Step title="Open Appsmith">
+    Navigate to the external IP or hostname in your browser and complete the setup wizard to create your admin account.
+  </Step>
+</Steps>
+
+## Key values.yaml overrides
+
+Customize the deployment by passing `--set` flags or a custom `values.yaml` file to `helm install` or `helm upgrade`.
+
+### Change the service type to LoadBalancer
+
+```yaml
+service:
+  type: LoadBalancer
+  port: 80
+```js
+
+```bash
+helm install appsmith appsmith/appsmith \
+  --namespace appsmith \
+  --create-namespace \
+  --set service.type=LoadBalancer
+```
+
+### Use an external MongoDB (disable bundled)
+
+```yaml
+mongodb:
+  enabled: false
+
+appsmith:
+  mongodbUri: "mongodb+srv://user:password@cluster.example.com/appsmith"
+```js
+
+### Use an external Redis (disable bundled)
+
+```yaml
+redis:
+  enabled: false
+
+appsmith:
+  redisUri: "redis://user:password@redis.example.com:6379"
+```
+
+### Set encryption keys
+
+```yaml
+appsmith:
+  encryptionPassword: "<strong-random-password>"
+  encryptionSalt: "<strong-random-salt>"
+```js
+
+<Warning>
+Set `encryptionPassword` and `encryptionSalt` before the first run. Changing these values after deployment will corrupt stored datasource credentials.
+</Warning>
+
+### Enable Prometheus monitoring
+
+```yaml
+prometheus:
+  enabled: true
+  image:
+    tag: v0.74.0
+```
+
+### Configure storage class
+
+```yaml
+global:
+  storageClass: "standard"
+```js
+
+### Complete custom values.yaml example
+
+```yaml
+service:
+  type: LoadBalancer
+  port: 80
+
+appsmith:
+  encryptionPassword: "my-strong-password"
+  encryptionSalt: "my-random-salt"
+
+mongodb:
+  enabled: true
+  replicaCount: 2
+  architecture: "replicaset"
+  replicaSetName: rs0
+  auth:
+    rootUser: root
+    rootPassword: "secure-mongo-password"
+
+redis:
+  enabled: true
+  image:
+    tag: 7.0.15
+
+global:
+  storageClass: "standard"
+```
+
+Apply with:
+
+```bash
+helm install appsmith appsmith/appsmith \
+  --namespace appsmith \
+  --create-namespace \
+  --values custom-values.yaml
+```js
+
+## Upgrading Appsmith
+
+```bash
+helm repo update
+helm upgrade appsmith appsmith/appsmith --namespace appsmith
+```
+
+To upgrade with custom values:
+
+```bash
+helm upgrade appsmith appsmith/appsmith \
+  --namespace appsmith \
+  --values custom-values.yaml
+```js
+
+Appsmith runs database migrations automatically on startup. Monitor the pod logs after an upgrade:
+
+```bash
+kubectl logs -n appsmith -l app.kubernetes.io/name=appsmith -f
+```
+
+## Uninstalling
+
+```bash
+helm uninstall appsmith --namespace appsmith
+```
+
+<Warning>
+Uninstalling the Helm release deletes the application pods and services but **does not delete PersistentVolumeClaims**. Delete them manually if you want to remove all data:
+
+```bash
+kubectl delete pvc -n appsmith --all
+```
+</Warning>
+
+## Related
+
+- [Docker deployment](/deployment/docker)
+- [Cloud providers](/deployment/cloud-providers)
+- [Configuration reference](/deployment/configuration)

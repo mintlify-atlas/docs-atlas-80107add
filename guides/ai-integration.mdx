@@ -1,0 +1,178 @@
+---
+title: "AI Integrations"
+description: "Connect OpenAI, Anthropic, and Google AI to build AI-powered tools."
+---
+
+Appsmith has native plugins for OpenAI, Anthropic, Google AI, and its own Appsmith AI feature. All four follow the same pattern: add a datasource with your API key, write a query, and bind the response to a widget.
+
+<Tabs>
+  <Tab title="OpenAI">
+    **Add the datasource**
+
+    1. Click **+** next to **Datasources** and select **OpenAI**.
+    2. Enter your OpenAI API key. You can find or create keys at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+    3. Click **Save**.
+
+    **Write a Chat Completions query**
+
+    Create a query named `askOpenAI`. Set the command to **Chat** and the model to `gpt-4o` (or any available model). In the **Messages** body:
+
+    ```json
+    [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant for internal support queries."
+      },
+      {
+        "role": "user",
+        "content": "{{userInput.text}}"
+      }
+    ]
+    ```
+
+    **Bind the response to a Text widget**
+
+    Add a **Text** widget named `responseText`. Set its **Text** property to:
+
+    ```javascript
+    {{askOpenAI.data.choices[0].message.content}}
+    ```
+
+    Add an **Input** widget named `userInput` and a **Button** whose **onClick** runs `{{askOpenAI.run()}}`.
+
+    <Tip>
+      To maintain a conversation history across multiple turns, use a JS Object to build the messages array dynamically:
+
+      ```javascript
+      export default {
+        history: [],
+
+        async sendMessage(userMessage) {
+          this.history.push({ role: 'user', content: userMessage });
+          await askOpenAI.run();
+          const reply = askOpenAI.data.choices[0].message.content;
+          this.history.push({ role: 'assistant', content: reply });
+        }
+      }
+      ```
+
+      Bind the messages body to `{{ChatManager.history}}` and call `ChatManager.sendMessage(userInput.text)` from your button.
+    </Tip>
+  </Tab>
+
+  <Tab title="Anthropic">
+    **Add the datasource**
+
+    1. Click **+** next to **Datasources** and select **Anthropic**.
+    2. Enter your Anthropic API key from [console.anthropic.com](https://console.anthropic.com).
+    3. Click **Save**.
+
+    **Write a Messages query**
+
+    Create a query named `askClaude`. Select the **Messages** command and set the model to `claude-opus-4-5` (or your preferred Claude model). Set the **Messages** body:
+
+    ```json
+    [
+      {
+        "role": "user",
+        "content": "{{userInput.text}}"
+      }
+    ]
+    ```
+
+    Set **Max tokens** to `1024` and optionally add a system prompt in the **System** field:
+
+    ```
+    You are an assistant that summarizes support tickets concisely.
+    ```
+
+    **Bind the response to a Text widget**
+
+    ```javascript
+    {{askClaude.data.content[0].text}}
+    ```
+
+    <Tip>
+      For multi-turn conversation history with Anthropic, build the messages array the same way as with OpenAI — accumulate `{role, content}` objects in a JS Object array and bind the array to the query's messages field.
+    </Tip>
+  </Tab>
+
+  <Tab title="Google AI">
+    **Add the datasource**
+
+    1. Click **+** next to **Datasources** and select **Google AI**.
+    2. Enter your Google AI API key from [aistudio.google.com](https://aistudio.google.com).
+    3. Click **Save**.
+
+    **Write a Generate Content query**
+
+    Create a query named `askGemini`. Select the **Generate Content** command and set the model to `gemini-1.5-pro`. Set the **Prompt** field:
+
+    ```javascript
+    {{userInput.text}}
+    ```
+
+    **Bind the response to a Text widget**
+
+    ```javascript
+    {{askGemini.data.candidates[0].content.parts[0].text}}
+    ```
+
+    Add a system instruction in the query's **System instruction** field to set the model's behavior for your use case:
+
+    ```
+    You are a data analyst. Answer questions about the data concisely and precisely.
+    ```
+
+    <Tip>
+      Use a JS Object to build conversation history arrays for Gemini the same way you would for OpenAI or Anthropic. Accumulate `{role, parts: [{text}]}` objects and bind to the query's contents field.
+    </Tip>
+  </Tab>
+
+  <Tab title="Appsmith AI">
+    **What is Appsmith AI?**
+
+    Appsmith AI is a built-in AI feature that provides AI assistance directly within the Appsmith platform without requiring an external API key. It is designed for common tasks like generating queries, writing JS logic, and providing contextual suggestions inside the editor.
+
+    **Using Appsmith AI in queries**
+
+    1. Click **+** next to **Datasources** and select **Appsmith AI**.
+    2. No API key is required — Appsmith AI is available to all users.
+    3. Create a query and describe what you want in plain language. Appsmith AI generates the query for you.
+
+    **Bind the response to a widget**
+
+    ```javascript
+    {{appsmithAIQuery.data.message}}
+    ```
+
+    Appsmith AI integrates with your app's datasource context, so it can generate SQL or API calls based on your connected datasources.
+  </Tab>
+</Tabs>
+
+## Example: prompt and response binding
+
+Here is a minimal complete example for any AI datasource. Place these widgets on the canvas:
+
+| Widget | Name | Property | Value |
+|--------|------|----------|-------|
+| Input | `userInput` | Placeholder | `Ask a question...` |
+| Button | `submitBtn` | onClick | `{{askOpenAI.run()}}` |
+| Text | `responseDisplay` | Text | `{{askOpenAI.data.choices[0].message.content}}` |
+| Text | `loadingIndicator` | Visible | `{{askOpenAI.isLoading}}` |
+
+The `isLoading` flag is available on every Appsmith query and lets you show a loading state without writing any JavaScript.
+
+## Related guides
+
+<CardGroup>
+  <Card title="Writing JavaScript" icon="code" href="/core-concepts/writing-javascript">
+    JS Objects, async/await patterns, and store variables.
+  </Card>
+  <Card title="REST API datasource" icon="globe" href="/datasources/rest-api">
+    Connect to any AI provider not covered by a native plugin.
+  </Card>
+  <Card title="Custom Widgets" icon="puzzle-piece" href="/guides/custom-widgets">
+    Build a custom chat UI with HTML/CSS/JS.
+  </Card>
+</CardGroup>

@@ -1,0 +1,225 @@
+---
+title: "Cloud providers"
+description: "Deploy Appsmith on AWS, DigitalOcean, or Heroku."
+---
+
+Appsmith runs on any cloud provider that supports Docker. The steps below cover the three most common paths: AWS EC2, DigitalOcean Droplets, and Heroku.
+
+<Tabs>
+  <Tab title="AWS">
+    ## AWS EC2
+
+    ### Recommended instance
+
+    | Setting | Value |
+    |---|---|
+    | Instance type | `t3.medium` (2 vCPU, 4 GB RAM) minimum |
+    | AMI | Amazon Linux 2023 or Ubuntu 22.04 LTS |
+    | Storage | 30 GB gp3 EBS volume |
+    | Security group inbound | TCP 80 (HTTP), TCP 443 (HTTPS), TCP 22 (SSH, restricted to your IP) |
+
+    ### Steps
+
+    <Steps>
+      <Step title="Launch an EC2 instance">
+        In the AWS console, launch a `t3.medium` instance using Amazon Linux 2023 or Ubuntu 22.04. Attach at least 30 GB of EBS storage. Assign a security group that allows inbound traffic on ports 80 and 443.
+      </Step>
+      <Step title="Assign an Elastic IP">
+        Allocate and associate an Elastic IP to the instance so the address does not change on restart. This IP is what you will point a DNS record to.
+      </Step>
+      <Step title="SSH into the instance and install Docker">
+        ```bash
+        # Amazon Linux 2023
+        sudo dnf update -y
+        sudo dnf install -y docker
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker ec2-user
+
+        # Ubuntu 22.04
+        sudo apt update && sudo apt install -y docker.io docker-compose-plugin
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker ubuntu
+        ```
+
+        Log out and back in for the group change to take effect.
+      </Step>
+      <Step title="Deploy Appsmith with Docker Compose">
+        ```bash
+        mkdir appsmith && cd appsmith
+        ```
+
+        Create `docker-compose.yml`:
+
+        ```yaml
+        version: "3"
+
+        services:
+          appsmith:
+            image: index.docker.io/appsmith/appsmith-ce:release
+            container_name: appsmith
+            ports:
+              - "80:80"
+              - "443:443"
+            environment:
+              APPSMITH_ENCRYPTION_PASSWORD: "<strong-random-password>"
+              APPSMITH_ENCRYPTION_SALT: "<strong-random-salt>"
+            volumes:
+              - ./stacks:/appsmith-stacks
+            restart: unless-stopped
+        ```
+
+        Start the container:
+
+        ```bash
+        docker compose up -d
+        ```
+      </Step>
+      <Step title="Configure DNS">
+        Create an A record in your DNS provider pointing your domain (e.g. `appsmith.example.com`) to the Elastic IP. Appsmith automatically provisions a Let's Encrypt TLS certificate once DNS propagates.
+      </Step>
+    </Steps>
+
+    <Tip>
+    For higher availability, place the instance behind an Application Load Balancer and use an RDS instance or DocumentDB cluster as the external database. See [Configuration](/deployment/configuration) for connecting to an external MongoDB URI.
+    </Tip>
+  </Tab>
+  <Tab title="DigitalOcean">
+    ## DigitalOcean Droplet
+
+    ### Recommended Droplet
+
+    | Setting | Value |
+    |---|---|
+    | Plan | Basic, 2 vCPU / 4 GB RAM ($24/mo) |
+    | Image | Ubuntu 22.04 LTS |
+    | Region | Closest to your users |
+    | Firewall | Allow inbound TCP 80, 443, and 22 |
+
+    ### Option A — Docker one-click image
+
+    DigitalOcean offers a **Docker** one-click Droplet image that ships with Docker CE and Docker Compose pre-installed.
+
+    <Steps>
+      <Step title="Create a Droplet with the Docker image">
+        In the DigitalOcean control panel, click **Create → Droplets**. Under **Choose an image**, select the **Marketplace** tab and search for **Docker**. Choose the Docker one-click image, then select the 2 vCPU / 4 GB RAM plan.
+      </Step>
+      <Step title="SSH into the Droplet">
+        ```bash
+        ssh root@<droplet-ip>
+        ```
+      </Step>
+      <Step title="Deploy Appsmith">
+        ```bash
+        mkdir appsmith && cd appsmith
+        ```
+
+        Create `docker-compose.yml` (same content as in the AWS tab), then run:
+
+        ```bash
+        docker compose up -d
+        ```
+      </Step>
+      <Step title="Assign a reserved IP and configure DNS">
+        In the DigitalOcean panel, assign a **Reserved IP** to the Droplet. Create an A record pointing your domain to that IP. Appsmith provisions a TLS certificate automatically.
+      </Step>
+    </Steps>
+
+    ### Option B — Manual install on Ubuntu 22.04
+
+    <Steps>
+      <Step title="Create a plain Ubuntu 22.04 Droplet">
+        Select **Ubuntu 22.04** as the image and choose the 2 vCPU / 4 GB plan.
+      </Step>
+      <Step title="Install Docker">
+        ```bash
+        sudo apt update && sudo apt install -y docker.io docker-compose-plugin
+        sudo systemctl enable --now docker
+        ```
+      </Step>
+      <Step title="Deploy Appsmith">
+        Follow the same `docker-compose.yml` steps as Option A.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Heroku">
+    ## Heroku
+
+    The Appsmith repository includes a `heroku.yml` that builds the container image from `deploy/heroku/Dockerfile`.
+
+    ```yaml
+    build:
+      docker:
+        web: deploy/heroku/Dockerfile
+    ```
+
+    <Steps>
+      <Step title="Install the Heroku CLI">
+        ```bash
+        # macOS
+        brew tap heroku/brew && brew install heroku
+
+        # Ubuntu/Debian
+        curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+        ```
+      </Step>
+      <Step title="Log in and create an app">
+        ```bash
+        heroku login
+        heroku create your-appsmith-app
+        ```
+      </Step>
+      <Step title="Set the stack to container">
+        ```bash
+        heroku stack:set container --app your-appsmith-app
+        ```
+      </Step>
+      <Step title="Clone the Appsmith repository">
+        ```bash
+        git clone https://github.com/appsmithorg/appsmith.git
+        cd appsmith
+        heroku git:remote --app your-appsmith-app
+        ```
+      </Step>
+      <Step title="Set required config vars">
+        ```bash
+        heroku config:set \
+          APPSMITH_ENCRYPTION_PASSWORD="<strong-random-password>" \
+          APPSMITH_ENCRYPTION_SALT="<strong-random-salt>" \
+          --app your-appsmith-app
+        ```
+      </Step>
+      <Step title="Deploy">
+        ```bash
+        git push heroku main
+        ```
+
+        Heroku builds the Docker image from `deploy/heroku/Dockerfile` and deploys the container.
+      </Step>
+      <Step title="Open the app">
+        ```bash
+        heroku open --app your-appsmith-app
+        ```
+      </Step>
+    </Steps>
+
+    <Warning>
+    Heroku's ephemeral filesystem means that any data written inside the container (database files, uploaded assets) is lost on dyno restart. For a persistent Heroku deployment, configure an external MongoDB URI via the `APPSMITH_MONGODB_URI` environment variable. See [Configuration](/deployment/configuration).
+    </Warning>
+  </Tab>
+</Tabs>
+
+## After deployment
+
+Once Appsmith is running on any provider:
+
+1. Navigate to the public URL or IP in your browser.
+2. Complete the **setup wizard** to create the first admin account.
+3. Configure email, SSO, and other settings under **Admin Settings**.
+
+For environment variable reference, see [Configuration](/deployment/configuration).
+
+## Related
+
+- [Docker deployment](/deployment/docker)
+- [Kubernetes deployment](/deployment/kubernetes)
+- [Configuration reference](/deployment/configuration)

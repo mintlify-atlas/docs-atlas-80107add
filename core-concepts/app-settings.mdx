@@ -1,0 +1,84 @@
+---
+title: "App settings"
+description: "Configure your app's name, pages, theme, and access controls."
+---
+
+App settings let you control the identity, structure, appearance, and visibility of your Appsmith application. Access them from the gear icon in the bottom-left corner of the editor.
+
+## App identity
+
+In the **General** tab you can set:
+
+- **App name** — The name shown in your workspace dashboard and in the browser tab when the app is open.
+- **App icon** — Choose from the built-in icon set to visually distinguish this app in your workspace.
+- **App description** — A short description visible to other workspace members from the dashboard.
+
+## Page management
+
+Each Appsmith app can contain multiple pages. Pages are listed in the left sidebar under the page panel.
+
+**Add a page** — Click **+** next to the pages section to add a blank page.
+
+**Rename a page** — Double-click a page name in the sidebar, type the new name, and press Enter.
+
+**Reorder pages** — Drag pages up or down in the sidebar to change their order. The first page is the default landing page when users open the app.
+
+**Delete a page** — Right-click a page name and select **Delete**. This is permanent and cannot be undone.
+
+<Warning>
+  Deleting a page removes all widgets, queries, and JS Objects scoped to that page. Global datasources and JS Objects defined at the app level are not affected.
+</Warning>
+
+## Theming
+
+The **Theme** tab in app settings lets you apply a consistent visual style across all widgets.
+
+- **Color palette** — Set a primary color and background color. Widgets use the primary color for accents, buttons, and interactive states.
+- **Fonts** — Choose a font family for the app from the supported Google Fonts list. Applied globally to all text widgets.
+- **Border radius** — Control the roundness of widget corners. Ranges from sharp (0px) to fully rounded (pill shape).
+- **Box shadow** — Apply a default shadow depth to card-style widgets.
+
+Widget-level style overrides in the property pane take precedence over the app theme.
+
+<Tip>
+  Define your theme early in the build process. Changing the primary color later will update all theme-aware widgets at once, saving significant manual effort.
+</Tip>
+
+## Sharing and access control
+
+Click **Share** in the top-right corner of the editor to manage who can access your app.
+
+**Viewer** — Can open and interact with the published app but cannot edit it or see the editor.
+
+**Editor** — Can open the editor, modify widgets and queries, and deploy changes.
+
+You can invite people by email address or share an invite link. Access can be scoped to the app or to the entire workspace.
+
+<Note>
+  Public access (allowing anyone with the link to view the app without logging in) is available on paid plans and can be toggled from the **Share** dialog.
+</Note>
+
+## Embedding via iframe
+
+Appsmith apps can be embedded in any web page using a standard HTML iframe. After publishing, copy the embed URL from **App settings** → **Share** → **Embed**.
+
+```html
+<iframe
+  src="https://app.appsmith.com/app/my-app/page1-abc123?embed=true"
+  width="100%"
+  height="700px"
+  frameborder="0"
+></iframe>
+```js
+
+The `?embed=true` parameter hides the Appsmith navigation bar and toolbar for a cleaner embedded experience.
+
+<Warning>
+  Embedded apps inherit the same access controls as the published app. If your app is not set to public access, users will be prompted to log in before the app loads inside the iframe.
+</Warning>
+
+## Next steps
+
+- [User management guide](/guides/user-management) — Manage workspace members and roles at scale.
+- [SSO setup](/guides/sso-setup) — Configure SAML or OAuth-based single sign-on for your workspace.
+- [Version control](/guides/version-control) — Connect your app to a Git repository for branching and review workflows.

@@ -1,0 +1,83 @@
+---
+title: "Building UI"
+description: "Drag, drop, and configure widgets on the Appsmith canvas."
+---
+
+Appsmith's visual editor has three main areas: the canvas, the widget panel, and the property pane. You build your UI by dragging widgets from the panel onto the canvas and configuring them in the property pane.
+
+## Editor layout
+
+**Canvas** — The central area where you compose your app's pages. Widgets snap to a grid, making it easy to align and resize elements. Each app can have multiple pages; switch between them using the pages panel on the left.
+
+**Widget panel** — A searchable library of UI components available on the left sidebar. Widgets are grouped by category: inputs, data display, layout, media, and more. See [widgets overview](/widgets/overview) for the full list.
+
+**Property pane** — Appears on the right when you select a widget. Contains all configuration options for that widget: data bindings, styles, and event handlers.
+
+## Adding and configuring a widget
+
+<Steps>
+  <Step title="Open the widget panel">
+    Click the **Widgets** icon in the left sidebar, or press **W** to toggle the panel.
+  </Step>
+  <Step title="Drag a widget onto the canvas">
+    Find the widget you need (for example, **Table**) and drag it onto the canvas. Resize it by dragging the handles on its edges.
+  </Step>
+  <Step title="Bind data in the property pane">
+    Select the widget. In the property pane, click into the data field and enter a mustache binding that references your query:
+
+    ```
+    {{ getUsersQuery.data }}
+    ```
+
+    Appsmith evaluates the expression in real time — you'll see the table populate as soon as the binding resolves.
+  </Step>
+  <Step title="Configure styles">
+    Use the **Style** tab in the property pane to adjust colors, fonts, border radius, and other visual properties. Global theme settings apply by default; widget-level overrides take precedence.
+  </Step>
+  <Step title="Add event handlers">
+    Switch to the **Events** section of the property pane to wire up actions. For example, on a Button widget you can set **onClick** to run a query, show a modal, or navigate to another page.
+  </Step>
+</Steps>
+
+## Mustache bindings
+
+Any property that accepts dynamic data uses `{{ }}` mustache syntax. Inside the braces you can write any valid JavaScript expression.
+
+```js
+{{ getUsersQuery.data }}
+```
+
+```js
+{{ currentUser.email }}
+```
+
+```js
+{{ input1.text.toUpperCase() }}
+```
+
+Bindings are reactive — when the referenced value changes (for example, when a query re-runs), the widget updates automatically.
+
+## Widget events
+
+Widgets expose lifecycle and interaction events you can handle in the property pane. Common events include:
+
+| Event | Triggered when |
+|---|---|
+| `onClick` | The user clicks the widget (Button, Icon, Image) |
+| `onTextChanged` | The value of an input changes |
+| `onSubmit` | A form or input is submitted |
+| `onSuccess` | A bound query completes successfully |
+| `onError` | A bound query returns an error |
+| `onRowSelected` | A row in a Table is clicked |
+
+Each event handler can run a query, execute a JS Object function, show an alert, open a modal, navigate to a page, or store a value. You can chain multiple actions per event.
+
+<Tip>
+  Use `onSuccess` and `onError` on query-triggered actions to give users feedback. For example, show a success alert on `onSuccess` and display an error message on `onError`.
+</Tip>
+
+## Next steps
+
+- [Connecting to data](/core-concepts/connecting-data) — Learn how queries power your widgets.
+- [Writing JavaScript](/core-concepts/writing-javascript) — Add custom logic with JS Objects.
+- [Form input widgets](/widgets/form-inputs) — Capture user input with text fields, dropdowns, and more.

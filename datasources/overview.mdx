@@ -1,0 +1,59 @@
+---
+title: "Datasources Overview"
+description: "Connect Appsmith to databases, REST APIs, and SaaS tools."
+---
+
+A **datasource** in Appsmith is a saved, named connection to an external data source. Connection credentials are stored server-side and never exposed to the browser. Each datasource can be reused across multiple queries within the same application.
+
+When you create a datasource, Appsmith stores the configuration (host, port, credentials, SSL settings) and lets you write queries against it directly from the query editor. You can also test the connection before saving to confirm reachability.
+
+## Supported integrations
+
+<CardGroup cols={3}>
+  <Card title="Databases" icon="database" href="/datasources/databases">
+    PostgreSQL, MySQL, MongoDB, Microsoft SQL Server, Redis, Elasticsearch, DynamoDB, Firestore, Oracle, Snowflake, Redshift, ArangoDB, Databricks
+  </Card>
+  <Card title="APIs & SaaS" icon="plug" href="/datasources/rest-api">
+    REST API, GraphQL, Google Sheets, Amazon S3, AWS Lambda, SMTP
+  </Card>
+  <Card title="AI" icon="sparkles" href="/guides/ai-integration">
+    OpenAI, Anthropic, Google AI, Appsmith AI
+  </Card>
+</CardGroup>
+
+## How datasources work
+
+1. **Create a datasource** — go to the **Data** tab in the left sidebar and click **+**.
+2. **Choose an integration** — select the plugin that matches your data source.
+3. **Enter connection details** — host, port, credentials, and any plugin-specific options.
+4. **Test the connection** — click **Test** to verify Appsmith can reach the host before saving.
+5. **Save** — the datasource is now available to all queries in the workspace.
+6. **Write queries** — create queries under the datasource and bind the results to widgets using `{{ queryName.data }}`.
+
+## Testing a connection
+
+Click **Test** on any datasource configuration page. Appsmith attempts to open a connection using the provided credentials. A green banner confirms success; a red banner shows the error message returned by the server.
+
+<Note>
+Test results reflect connectivity from the Appsmith server, not from your browser. If your database is behind a VPN or firewall, ensure the Appsmith server IP is allow-listed.
+</Note>
+
+## Datasource security
+
+- Credentials are encrypted at rest using `APPSMITH_ENCRYPTION_PASSWORD` and `APPSMITH_ENCRYPTION_SALT`.
+- Credentials are never sent to the client browser.
+- Each workspace member with edit access can use an existing datasource but cannot view raw credentials.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Database connections" icon="database" href="/datasources/databases">
+    Connect to PostgreSQL, MySQL, MongoDB, and more.
+  </Card>
+  <Card title="REST API" icon="globe" href="/datasources/rest-api">
+    Connect to any HTTP endpoint with headers and auth.
+  </Card>
+  <Card title="Google Sheets" icon="table" href="/datasources/google-sheets">
+    Read and write spreadsheet data via OAuth2.
+  </Card>
+</CardGroup>

@@ -1,0 +1,250 @@
+---
+title: "Data Display Widgets"
+description: "Show data with tables, charts, text, images, and more."
+---
+
+Data display widgets render query results, computed values, and static content on the canvas. Bind them to query data using `{{ }}` and they update automatically whenever the data changes.
+
+<AccordionGroup>
+
+  <Accordion title="Table">
+    The Table widget is the primary way to display structured data in Appsmith. It supports server-side and client-side pagination, inline editing, row-level actions, sorting, and filtering.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `tableData` | array | Rows to display — typically `{{ QueryName.data }}` |
+    | `columns` | array | Column configuration (auto-generated or manual) |
+    | `isVisible` | boolean | Show or hide the widget |
+    | `pageSize` | number | Rows shown per page |
+    | `serverSidePagination` | boolean | Delegate pagination to a query |
+    | `multiRowSelection` | boolean | Allow selecting multiple rows |
+    | `selectedRow` | object | Currently selected row data (read-only) |
+    | `selectedRows` | array | All selected rows when multi-select is on |
+    | `triggeredRow` | object | Row that triggered the most recent action |
+
+    **Column configuration**
+
+    Each column can have a `columnType` of `text`, `number`, `date`, `image`, `video`, `button`, `menu`, `icon button`, or `checkbox`. Set `isCellEditable` on individual columns to enable inline editing.
+
+    **Events**
+
+    - `onRowSelected` — fires when a user clicks a row
+    - `onPageChange` — fires when the user navigates to a different page
+    - `onSearchTextChanged` — fires when the search box value changes
+
+    **Binding example**
+
+    ```js
+    // Bind to a query
+    {{ GetOrders.data }}
+
+    // Access the selected row in another widget or query
+    {{ Table1.selectedRow.id }}
+    {{ Table1.selectedRow.status }}
+
+    // Filter data client-side
+    {{ GetOrders.data.filter(o => o.status === "open") }}
+    ```
+
+    <Tip>
+      For large datasets, enable **Server Side Pagination** and pass `{{ Table1.pageNo }}` and `{{ Table1.pageSize }}` as query parameters to your API or database query.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Chart">
+    The Chart widget visualizes data as line, bar, area, pie, or scatter plots. It is built on top of the FusionCharts library and accepts series data in a standard format.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `chartType` | string | `LINE_CHART`, `BAR_CHART`, `PIE_CHART`, `AREA_CHART`, `SCATTER_CHART` |
+    | `chartData` | array | One or more series, each with a `data` array of `{ x, y }` objects |
+    | `xAxisName` | string | Label for the horizontal axis |
+    | `yAxisName` | string | Label for the vertical axis |
+    | `chartName` | string | Chart title |
+    | `isVisible` | boolean | Show or hide the widget |
+
+    **Events**
+
+    - `onDataPointClick` — fires when the user clicks a data point; exposes `{{ Chart1.selectedDataPoint }}`
+
+    **Binding example**
+
+    ```js
+    // Map query results to chart series
+    [
+      {
+        seriesName: "Revenue",
+        data: {{ GetRevenue.data.map(r => ({ x: r.month, y: r.amount })) }}
+      }
+    ]
+
+    // Multiple series
+    [
+      {
+        seriesName: "Sales",
+        data: {{ Sales.data.map(r => ({ x: r.date, y: r.total })) }}
+      },
+      {
+        seriesName: "Refunds",
+        data: {{ Refunds.data.map(r => ({ x: r.date, y: r.total })) }}
+      }
+    ]
+    ```
+  </Accordion>
+
+  <Accordion title="Text">
+    The Text widget renders static strings, dynamic values, or full Markdown content. It is the simplest way to display labels, computed values, or formatted output.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `text` | string | Content to display; supports Markdown |
+    | `fontSize` | string | Font size (`S`, `M`, `L`, `XL`, `XXL`) |
+    | `fontStyle` | string | `BOLD`, `ITALIC`, `UNDERLINE` |
+    | `textAlign` | string | `LEFT`, `CENTER`, `RIGHT` |
+    | `textColor` | string | Hex color value |
+    | `isVisible` | boolean | Show or hide the widget |
+
+    **Binding example**
+
+    ```js
+    // Display a field from query data
+    {{ GetUser.data[0].name }}
+
+    // Combine static and dynamic text
+    "Welcome back, {{ GetUser.data[0].name }}!"
+
+    // Computed value
+    "Total orders: {{ GetOrders.data.length }}"
+
+    // Markdown with dynamic values
+    "### {{ GetProduct.data[0].title }}\n\n{{ GetProduct.data[0].description }}"
+    ```
+  </Accordion>
+
+  <Accordion title="Image">
+    The Image widget displays an image from a URL, a base64 data URI, or a storage service. It supports click events and can be conditionally shown or hidden.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `image` | string | Image URL or base64 data URI |
+    | `defaultImage` | string | Fallback image URL if the main source fails |
+    | `objectFit` | string | `contain`, `cover`, or `auto` |
+    | `isVisible` | boolean | Show or hide the widget |
+
+    **Events**
+
+    - `onClick` — fires when the user clicks the image
+
+    **Binding example**
+
+    ```js
+    // Bind to a URL from query data
+    {{ GetProducts.data[0].image_url }}
+
+    // Conditional image source
+    {{ Table1.selectedRow.avatar ?? "/images/default-avatar.png" }}
+    ```
+  </Accordion>
+
+  <Accordion title="Stat Box">
+    The Stat Box widget displays a single key metric alongside a label and an optional secondary value or trend indicator. It is designed for dashboard-style summary cards.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `text` | string | Primary metric value |
+    | `labelText` | string | Descriptive label below the metric |
+    | `isVisible` | boolean | Show or hide the widget |
+
+    **Binding example**
+
+    ```js
+    // Primary value
+    {{ GetStats.data[0].total_revenue }}
+
+    // Label
+    "Total Revenue (MTD)"
+    ```
+
+    <Note>
+      Combine multiple Stat Box widgets in a Container or a row to build a KPI summary bar at the top of a dashboard. See the [Dashboard guide](/guides/dashboard) for a walkthrough.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Progress Bar">
+    The Progress Bar widget renders a horizontal bar that fills proportionally to a numeric percentage value. Use it to visualize completion, usage, or quota metrics.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `progress` | number | Fill percentage, 0–100 |
+    | `isIndeterminate` | boolean | Show an animated indeterminate state |
+    | `fillColor` | string | Bar fill color (hex) |
+    | `isVisible` | boolean | Show or hide the widget |
+
+    **Binding example**
+
+    ```js
+    // Bind to a computed percentage
+    {{ Math.round((GetUsage.data[0].used / GetUsage.data[0].limit) * 100) }}
+
+    // Indeterminate while a query is loading
+    {{ GetUsage.isLoading }}
+    ```
+  </Accordion>
+
+  <Accordion title="List">
+    The List widget repeats a set of template widgets for each item in a data array. You define the layout once using any combination of widgets inside the list, and Appsmith clones that template for every row in the bound dataset.
+
+    **Key properties**
+
+    | Property | Type | Description |
+    |---|---|---|
+    | `items` | array | Data array — typically `{{ QueryName.data }}` |
+    | `currentItem` | object | The data object for the current row (use inside template widgets) |
+    | `currentIndex` | number | Zero-based index of the current row |
+    | `selectedItem` | object | Data for the most recently clicked item |
+    | `pageSize` | number | Number of items shown per page |
+    | `serverSidePagination` | boolean | Delegate pagination to a query |
+
+    **Events**
+
+    - `onItemClick` — fires when the user clicks an item row
+
+    **Binding example**
+
+    ```js
+    // Bind the list to a query
+    {{ GetArticles.data }}
+
+    // Inside a Text widget in the list template
+    {{ currentItem.title }}
+    {{ currentItem.author }}
+    {{ currentItem.published_at }}
+
+    // Access the selected item outside the list
+    {{ List1.selectedItem.id }}
+    ```
+
+    <Tip>
+      List is ideal for card-style layouts where each item needs custom formatting. For plain tabular data, use the [Table widget](#table) instead.
+    </Tip>
+  </Accordion>
+
+</AccordionGroup>
+
+## Next steps
+
+- [Form Input Widgets](/widgets/form-inputs) — collect user input to drive queries
+- [Layout Widgets](/widgets/layout) — organize display widgets into structured pages
+- [Guides: Dashboard](/guides/dashboard) — end-to-end walkthrough for a metrics dashboard

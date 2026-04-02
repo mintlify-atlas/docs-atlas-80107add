@@ -1,0 +1,129 @@
+---
+title: "Writing JavaScript"
+description: "Add custom logic with JavaScript expressions and JS Objects."
+---
+
+Appsmith supports JavaScript in two forms: inline expressions inside `{{ }}` bindings, and JS Objects for more complex, reusable logic.
+
+## Inline expressions
+
+Any widget property or query parameter that accepts a binding can contain a JavaScript expression inside `{{ }}`:
+
+```js
+{{ user.name.split(" ")[0] }}
+```
+
+```js
+{{ order.total > 1000 ? "High value" : "Standard" }}
+```
+
+```js
+{{ new Date(timestamp).toLocaleDateString() }}
+```
+
+Expressions must be single statements that return a value. For multi-step logic, use a JS Object.
+
+## JS Objects
+
+A JS Object is a reusable module you define in the **JS Objects** section of the left sidebar. It can contain multiple functions, including asynchronous ones that call queries or APIs.
+
+To create a JS Object, click **JS Objects** in the sidebar → **+ New JS Object**.
+
+### Example: fetch and filter
+
+```javascript
+export default {
+  async fetchAndFilter() {
+    const result = await getUsersQuery.run();
+    return result.filter(user => user.isActive);
+  },
+
+  formatName(user) {
+    return `${user.firstName} ${user.lastName}`;
+  }
+};
+```
+
+Call these functions from widget events or other JS Objects:
+
+```js
+{{ UserUtils.fetchAndFilter() }}
+```
+
+```js
+{{ UserUtils.formatName(usersTable.selectedRow) }}
+```
+
+<Note>
+  JS Object functions that call `await` must be declared `async`. Calling a query with `.run()` returns a Promise, so always `await` it inside an async function.
+</Note>
+
+## Calling queries from JavaScript
+
+Use `queryName.run()` to trigger a query programmatically:
+
+```javascript
+async function submitForm() {
+  await createUserQuery.run();
+}
+```
+
+You can pass parameter overrides as an object to temporarily replace values in the query:
+
+```javascript
+await getUserQuery.run({ userId: input1.text });
+```
+
+## Built-in platform functions
+
+Appsmith provides a set of built-in functions you can call from any JS expression or JS Object:
+
+| Function | Description |
+|---|---|
+| `showAlert(message, type)` | Display a toast notification. `type` can be `"success"`, `"error"`, `"warning"`, or `"info"`. |
+| `showModal(modalName)` | Open a Modal widget by name. |
+| `closeModal(modalName)` | Close an open Modal widget. |
+| `navigateTo(pageName, params)` | Navigate to another page in the app, with optional query parameters. |
+| `storeValue(key, value)` | Persist a value to the app's session store. |
+| `removeValue(key)` | Remove a value from the session store. |
+| `copyToClipboard(text)` | Copy a string to the clipboard. |
+| `download(data, fileName, fileType)` | Trigger a file download. |
+| `resetWidget(widgetName)` | Reset a widget to its default state. |
+
+### Examples
+
+```javascript
+// Show a success toast
+showAlert("User created successfully.", "success");
+
+// Open a modal
+showModal("confirmDeleteModal");
+
+// Navigate to another page with a parameter
+navigateTo("UserDetail", { userId: usersTable.selectedRow.id });
+
+// Store a value and read it back
+storeValue("authToken", response.token);
+// Later: {{ appsmith.store.authToken }}
+```
+
+## Accessing app context
+
+The global `appsmith` object exposes runtime context:
+
+```javascript
+appsmith.user.email        // logged-in user's email
+appsmith.user.name         // logged-in user's name
+appsmith.store             // session store (values set with storeValue)
+appsmith.URL.queryParams   // current page URL query parameters
+```
+
+<Tip>
+  Use `appsmith.user` to personalize UI elements or restrict access to certain actions based on the logged-in user's identity.
+</Tip>
+
+## Next steps
+
+- [Building UI](/core-concepts/building-ui) — Use JS expressions to drive widget properties.
+- [Connecting to data](/core-concepts/connecting-data) — Understand how queries work before calling them from JS.
+- [AI integration guide](/guides/ai-integration) — Use JS Objects to integrate LLM APIs into your app.

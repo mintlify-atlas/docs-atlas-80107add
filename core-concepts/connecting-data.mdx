@@ -1,0 +1,94 @@
+---
+title: "Connecting to data"
+description: "Create datasources and write queries to power your app."
+---
+
+Appsmith separates the connection configuration (a **datasource**) from the individual operations you perform against it (a **query**). You create a datasource once and reuse it across as many queries as you need.
+
+## Datasources vs. queries
+
+A **datasource** stores connection details: host, port, database name, credentials, and any SSL configuration. Credentials are encrypted at rest. You manage datasources from the **Datasources** section in the left sidebar.
+
+A **query** is a single operation against a datasource — a SQL statement, an API call, a document read, and so on. Queries belong to a page and can be triggered automatically or manually.
+
+See [datasources overview](/datasources/overview) for the full list of supported integrations, including [databases](/datasources/databases), [REST APIs](/datasources/rest-api), and [Google Sheets](/datasources/google-sheets).
+
+## Binding query data to widgets
+
+When a query runs, its results are stored in `queryName.data`. Reference this in any widget property using mustache syntax:
+
+```js
+{{ queryName.data }}
+```
+
+For a Table widget showing a list of users:
+
+```js
+{{ getUsersQuery.data }}
+```
+
+For a Text widget showing a single value from the first row:
+
+```js
+{{ getUsersQuery.data[0].email }}
+```
+
+Bindings update automatically when the query re-runs.
+
+## Run on page load vs. manual trigger
+
+By default, queries do not run automatically. You can change this in the query's settings:
+
+**Run on page load** — Enable this option to execute the query whenever the page opens. Useful for queries that populate tables, charts, or other read-only displays on initial render.
+
+**Manual trigger** — Leave run-on-page-load disabled and call the query from a widget event (for example, a Button's `onClick`) or from JavaScript:
+
+```javascript
+getUsersQuery.run();
+```
+
+<Note>
+  If you enable **Run on page load** on a query that writes data (INSERT, UPDATE, DELETE), it will execute every time the page opens. Reserve run-on-page-load for read operations.
+</Note>
+
+## Loading and error states
+
+Every query exposes two reactive properties you can use to build responsive UIs:
+
+**`queryName.isLoading`** — `true` while the query is running, `false` when it completes or fails. Use this to show a spinner or disable a button while a request is in flight:
+
+```js
+{{ submitQuery.isLoading }}
+```
+
+Bind a Button's **Disabled** property to `{{ submitQuery.isLoading }}` to prevent double-submits.
+
+**`queryName.isError`** — `true` if the most recent run returned an error. Use this to show a conditional error message:
+
+```js
+{{ getUsersQuery.isError ? "Failed to load users." : "" }}
+```
+
+<Warning>
+  `queryName.data` retains the last successful result even after an error. Always check `queryName.isError` before trusting that the data is current.
+</Warning>
+
+## Passing widget values to queries
+
+Use mustache bindings inside the query body to reference widget values dynamically:
+
+```sql
+SELECT * FROM users WHERE id = {{ usersTable.selectedRow.id }};
+```
+
+```sql
+SELECT * FROM orders WHERE status = '{{ statusDropdown.selectedOptionValue }}';
+```
+
+Appsmith re-evaluates these bindings each time the query runs, so the values are always current.
+
+## Next steps
+
+- [Building UI](/core-concepts/building-ui) — Bind query data to widgets on the canvas.
+- [Writing JavaScript](/core-concepts/writing-javascript) — Chain queries and add custom logic.
+- [REST API datasources](/datasources/rest-api) — Connect to any HTTP endpoint.

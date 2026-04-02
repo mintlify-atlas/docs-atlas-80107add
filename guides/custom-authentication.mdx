@@ -1,0 +1,117 @@
+---
+title: "Custom Authentication"
+description: "Integrate your own auth system or use Google/GitHub OAuth."
+---
+
+Appsmith supports several authentication methods: its own built-in email/password system, OAuth 2.0 via Google and GitHub, SAML and OIDC for enterprise SSO, and the ability to pass tokens from an external auth provider to your API datasources.
+
+<Note>
+  To disable public self-registration on a self-hosted instance, set the environment variable `APPSMITH_SIGNUP_DISABLED=true` in your deployment configuration. Existing users can still log in; only new account creation is blocked. See [Configuration](/deployment/configuration) for environment variable reference.
+</Note>
+
+## Built-in email/password authentication
+
+Out of the box, Appsmith provides email/password login for all users. Administrators can invite users by email from the workspace settings. No additional configuration is required.
+
+## Google OAuth
+
+<Steps>
+  <Step title="Create OAuth credentials in Google Cloud Console">
+    1. Go to [console.cloud.google.com](https://console.cloud.google.com) and open your project.
+    2. Navigate to **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID**.
+    3. Set **Application type** to **Web application**.
+    4. Add your Appsmith instance URL to **Authorized redirect URIs**:
+       ```
+       https://<your-appsmith-domain>/login/oauth2/code/google
+       ```
+    5. Copy the **Client ID** and **Client Secret**.
+  </Step>
+
+  <Step title="Configure Google OAuth in Appsmith Admin Settings">
+    1. Log in as an admin and go to **Admin Settings** → **Authentication**.
+    2. Select **Google OAuth** and enter the Client ID and Client Secret from the previous step.
+    3. Click **Save**.
+
+    Users can now log in with **Sign in with Google** on the Appsmith login page.
+  </Step>
+</Steps>
+
+## GitHub OAuth
+
+<Steps>
+  <Step title="Register an OAuth app in GitHub">
+    1. Go to **GitHub** → **Settings** → **Developer settings** → **OAuth Apps** → **New OAuth App**.
+    2. Set the **Authorization callback URL** to:
+       ```
+       https://<your-appsmith-domain>/login/oauth2/code/github
+       ```
+    3. Copy the **Client ID** and generate a **Client Secret**.
+  </Step>
+
+  <Step title="Configure GitHub OAuth in Appsmith Admin Settings">
+    1. In Appsmith, go to **Admin Settings** → **Authentication**.
+    2. Select **GitHub OAuth** and enter the Client ID and Client Secret.
+    3. Click **Save**.
+
+    The GitHub login option appears on the Appsmith login page.
+  </Step>
+</Steps>
+
+## SAML and OIDC single sign-on
+
+For enterprise SSO with providers such as Okta, Azure AD, or Google Workspace, see [SSO Setup](/guides/sso-setup). SAML 2.0 and OpenID Connect are both supported as Business/Enterprise plan features.
+
+## Passing a JWT from an external auth provider
+
+If your users authenticate against an external system before reaching Appsmith, you can forward their tokens to your backend APIs via REST API datasource headers.
+
+1. Store the token in an Appsmith store variable when the app loads. For example, read it from a URL query parameter using a JS Object on page load:
+
+   ```javascript
+   export default {
+     async initAuth() {
+       const token = appsmith.URL.queryParams.token;
+       if (token) {
+         storeValue('authToken', token);
+       }
+     }
+   }
+   ```
+
+2. In your REST API datasource configuration, add an **Authorization** header:
+
+   ```
+   Authorization: Bearer {{appsmith.store.authToken}}
+   ```
+
+   This header is sent with every request made through that datasource, so all queries automatically include the user's JWT without adding it to each query individually.
+
+3. To verify the token is present before making requests, add a check in a JS Object:
+
+   ```javascript
+   export default {
+     getSecureData() {
+       if (!appsmith.store.authToken) {
+         showAlert('Session expired. Please log in again.', 'error');
+         return;
+       }
+       return secureQuery.run();
+     }
+   }
+   ```
+
+For more JavaScript patterns in Appsmith, see [Writing JavaScript](/core-concepts/writing-javascript).
+
+## Related guides
+
+<CardGroup>
+  <Card title="SSO Setup" icon="key" href="/guides/sso-setup">
+    Configure SAML 2.0 or OIDC with Okta, Azure AD, and other providers.
+  </Card>
+  <Card title="User Management" icon="users" href="/guides/user-management">
+    Workspace roles, app sharing, and managing members.
+  </Card>
+  <Card title="Deployment configuration" icon="server" href="/deployment/configuration">
+    Environment variables and self-hosted instance settings.
+  </Card>
+</CardGroup>

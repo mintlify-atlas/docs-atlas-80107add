@@ -1,28 +1,11 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "name": "Appsmith",
+  "projectType": "saas",
+  "projectName": "Appsmith",
+  "projectDescription": "An open-source low-code platform for building admin panels, internal tools, and dashboards that integrates with 25+ databases and any API.",
   "theme": "palm",
-  "colors": {
-    "primary": "#943c14",
-    "light": "#e2a58a",
-    "dark": "#272525"
-  },
-  "favicon": "https://media.brand.dev/f382ce02-3a5b-435f-a7a4-f7dfb9688b9f.jpg",
-  "logo": {
-    "light": "https://media.brand.dev/21092d05-e860-45f4-ac07-96ea3d1e2a93.svg",
-    "dark": "https://media.brand.dev/21092d05-e860-45f4-ac07-96ea3d1e2a93.svg"
-  },
-  "navbar": {
-    "primary": {
-      "type": "github",
-      "href": "https://github.com/appsmithorg/appsmith"
-    }
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/appsmithorg/appsmith"
-    }
-  },
+  "primaryColor": "#943c14",
+  "lightColor": "#e2a58a",
+  "darkColor": "#272525",
   "navigation": {
     "tabs": [
       {
@@ -105,5 +88,31 @@
         ]
       }
     ]
-  }
+  },
+  "keyFeatures": [
+    "Visual drag-and-drop UI builder with 45+ pre-built widgets",
+    "Native integrations with 25+ databases including PostgreSQL, MySQL, MongoDB, Redis",
+    "REST API and GraphQL support with OAuth2 authentication",
+    "JavaScript editor for custom logic and transformations",
+    "Git-based version control for collaborative development",
+    "Self-hosted deployment via Docker, Kubernetes, AWS, and more",
+    "Role-based access control (RBAC) and workspace management",
+    "AI integrations with OpenAI, Anthropic, and Google AI",
+    "Template library for rapid application bootstrapping",
+    "Custom JavaScript libraries support"
+  ],
+  "publicApiSurface": [
+    "GET /api/v1/applications - List applications",
+    "POST /api/v1/applications - Create application",
+    "GET /api/v1/pages/{pageId} - Get page",
+    "POST /api/v1/actions - Create action/query",
+    "POST /api/v1/actions/execute - Execute action",
+    "GET /api/v1/datasources - List datasources",
+    "POST /api/v1/datasources - Create datasource",
+    "GET /api/v1/plugins - List plugins",
+    "POST /api/v1/users/forgotPassword - Password reset",
+    "GET /api/v1/workspaces - List workspaces",
+    "POST /api/v1/git/connect - Connect git repository",
+    "GET /api/v1/themes - List themes"
+  ]
 }

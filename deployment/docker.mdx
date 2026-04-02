@@ -1,0 +1,144 @@
+---
+title: "Docker"
+description: "Install Appsmith on any machine using Docker Compose."
+---
+
+Docker Compose is the simplest way to run a self-hosted Appsmith instance. A single `docker-compose up -d` pulls the image, starts the container, and configures all internal services.
+
+## Prerequisites
+
+- A Linux, macOS, or Windows (WSL2) machine
+- [Docker Engine](https://docs.docker.com/engine/install/) 20.10 or later
+- [Docker Compose](https://docs.docker.com/compose/install/) v2 or later (included with Docker Desktop)
+- Minimum 2 vCPU and 4 GB RAM
+- Ports 80 and 443 available on the host
+
+## Installing Appsmith
+
+<Steps>
+  <Step title="Install Docker">
+    Follow the official Docker installation guide for your operating system. Verify the installation:
+
+    ```bash
+    docker --version
+    docker compose version
+    ```
+  </Step>
+  <Step title="Create a working directory">
+    ```bash
+    mkdir appsmith && cd appsmith
+    ```
+  </Step>
+  <Step title="Create docker-compose.yml">
+    Create the following `docker-compose.yml` file. This is based on the official Appsmith source:
+
+    ```yaml
+    version: "3"
+
+    services:
+      appsmith:
+        image: index.docker.io/appsmith/appsmith-ce:release
+        container_name: appsmith
+        ports:
+          - "80:80"
+          - "443:443"
+        environment:
+          APPSMITH_ENCRYPTION_PASSWORD: "<choose-a-strong-password>"
+          APPSMITH_ENCRYPTION_SALT: "<choose-a-random-salt>"
+        volumes:
+          - ./stacks:/appsmith-stacks
+        restart: unless-stopped
+    ```
+
+    <Warning>
+    Set `APPSMITH_ENCRYPTION_PASSWORD` and `APPSMITH_ENCRYPTION_SALT` before the first run. These values are used to encrypt datasource credentials stored on disk. **Changing them after the first run will corrupt existing encrypted data.** Use long, random strings and keep them in a secrets manager.
+    </Warning>
+  </Step>
+  <Step title="Start Appsmith">
+    ```bash
+    docker compose up -d
+    ```
+
+    Docker pulls the image (approximately 1 GB) and starts the container. The first startup takes 2–3 minutes while internal services initialize.
+
+    Check the status:
+
+    ```bash
+    docker compose ps
+    docker compose logs -f appsmith
+    ```
+
+    Wait until you see `Appsmith is running` in the logs.
+  </Step>
+  <Step title="Open Appsmith">
+    Navigate to [http://localhost](http://localhost) in your browser.
+  </Step>
+  <Step title="Complete the setup wizard">
+    Create an admin account on the setup wizard screen. This is the first user and has full administrative access to the instance.
+  </Step>
+</Steps>
+
+## Updating Appsmith
+
+Pull the latest image and restart the container:
+
+```bash
+docker compose pull
+docker compose up -d
+```js
+
+Appsmith performs any necessary database migrations automatically on startup. Check the logs after updating to confirm a clean start.
+
+## Backup and restore
+
+**Create a backup:**
+
+```bash
+docker compose exec appsmith appsmithctl backup
+```
+
+The backup archive is written to `./stacks/data/backup/`. Copy it off the host for safe storage.
+
+**Restore from a backup:**
+
+```bash
+docker compose exec appsmith appsmithctl restore
+```js
+
+Follow the interactive prompts to select the backup file to restore.
+
+<Note>
+Backups include the database, configuration, and uploaded assets. They do not include the Docker image itself.
+</Note>
+
+## Volume persistence
+
+All persistent data — database files, configuration, SSL certificates, and backups — lives in the `./stacks` directory mounted into the container at `/appsmith-stacks`.
+
+<Warning>
+Do not delete the `./stacks` directory while Appsmith is running. Removing or moving this directory without a backup will result in permanent data loss.
+</Warning>
+
+Back up `./stacks` regularly using your host's filesystem snapshot tools, or use `appsmithctl backup` to create portable archives.
+
+## Custom ports
+
+The default configuration maps host port 80 to the container. To run on a different port (for example, when port 80 is already in use), change the host-side mapping:
+
+```yaml
+ports:
+  - "8080:80"
+  - "8443:443"
+```
+
+Appsmith is then accessible at `http://localhost:8080`.
+
+## Environment variables
+
+See [Configuration](/deployment/configuration) for the full list of environment variables you can add to the `environment:` block.
+
+## Related
+
+- [Kubernetes deployment](/deployment/kubernetes)
+- [Cloud providers](/deployment/cloud-providers)
+- [Configuration reference](/deployment/configuration)

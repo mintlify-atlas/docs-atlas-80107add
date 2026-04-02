@@ -1,0 +1,210 @@
+---
+title: "Database connections"
+description: "Connect to PostgreSQL, MySQL, MongoDB, and more."
+---
+
+Appsmith ships with native plugins for relational databases, document stores, key-value stores, and data warehouses. All plugins share a common connection form and use server-side credentials so that secrets are never exposed in the browser.
+
+## Common connection fields
+
+Every database plugin includes these fields:
+
+| Field | Description |
+|---|---|
+| **Host address** | Hostname or IP of the database server |
+| **Port** | TCP port (each plugin pre-fills the default) |
+| **Database name** | Name of the target database or schema |
+| **Username** | Database user with appropriate permissions |
+| **Password** | Stored encrypted; never sent to the client |
+| **SSL** | Disable, require, or verify-full; upload CA/client certs when needed |
+
+<Tip>
+Click **Test** before saving. If the test fails, confirm that the Appsmith server's egress IP is allow-listed on your database firewall.
+</Tip>
+
+## Connecting a database
+
+<Steps>
+  <Step title="Open the Data tab">
+    In the left sidebar of the App Editor, click **Data**, then click **+** next to **Datasources**.
+  </Step>
+  <Step title="Select a plugin">
+    Choose the database plugin that matches your system (PostgreSQL, MySQL, MongoDB, etc.).
+  </Step>
+  <Step title="Fill in connection details">
+    Enter the host, port, database name, username, and password. Configure SSL if your database requires it.
+  </Step>
+  <Step title="Test and save">
+    Click **Test** to verify the connection, then click **Save**.
+  </Step>
+  <Step title="Create a query">
+    Click **+ New query** under the saved datasource, write your query, and click **Run**.
+  </Step>
+</Steps>
+
+## Database-specific configuration
+
+<Tabs>
+  <Tab title="PostgreSQL">
+    **Default port:** 5432
+
+    PostgreSQL connections support SSL modes: `disable`, `require`, `verify-ca`, and `verify-full`. For `verify-ca` and `verify-full`, upload a CA certificate in the **SSL** section.
+
+    **Example query — fetch a user by table selection:**
+
+    ```sql
+    SELECT id, name, email, created_at
+    FROM users
+    WHERE id = {{ Table1.selectedRow.id }}
+    LIMIT 1;
+    ```
+
+    **Parameterized update:**
+
+    ```sql
+    UPDATE users
+    SET name = {{ nameInput.text }},
+        email = {{ emailInput.text }}
+    WHERE id = {{ Table1.selectedRow.id }};
+    ```
+
+    Query results are available as `{{ queryName.data }}` — an array of row objects.
+
+    <Note>
+    Use `{{ }}` bindings for all user-supplied values. Appsmith sends them as prepared statement parameters, preventing SQL injection.
+    </Note>
+  </Tab>
+  <Tab title="MySQL">
+    **Default port:** 3306
+
+    MySQL connections support SSL and can use a connection URI instead of individual fields. Enable **Use SSH tunnel** if your database is behind a bastion host.
+
+    **Example query — paginated list:**
+
+    ```sql
+    SELECT id, title, status, updated_at
+    FROM tickets
+    WHERE status = {{ statusSelect.selectedOptionValue }}
+    ORDER BY updated_at DESC
+    LIMIT 20 OFFSET {{ (Table1.pageNo - 1) * 20 }};
+    ```
+
+    **Insert from a form:**
+
+    ```sql
+    INSERT INTO tickets (title, description, status)
+    VALUES (
+      {{ titleInput.text }},
+      {{ descInput.text }},
+      'open'
+    );
+    ```
+
+    Results are returned as `{{ queryName.data }}`, an array of row objects. For `INSERT`, `UPDATE`, and `DELETE`, `{{ queryName.data }}` contains the affected-rows count.
+  </Tab>
+  <Tab title="MongoDB">
+    **Default port:** 27017
+
+    MongoDB queries are written as structured form fields (Collection, Method, Query/Filter document) rather than raw query strings. You can also switch to **Raw** mode and write a MongoDB shell command.
+
+    **Form mode — find documents:**
+
+    - **Collection:** `orders`
+    - **Method:** Find
+    - **Query:** `{ "status": "{{ statusSelect.selectedOptionValue }}", "userId": {{ currentUser.id }} }`
+    - **Projection:** `{ "items": 0 }`
+    - **Sort:** `{ "createdAt": -1 }`
+    - **Limit:** `50`
+
+    **Form mode — insert a document:**
+
+    - **Collection:** `orders`
+    - **Method:** Insert
+    - **Documents:**
+
+    ```json
+    {
+      "userId": {{ currentUser.id }},
+      "product": "{{ productInput.text }}",
+      "quantity": {{ qtyInput.text }},
+      "createdAt": {{ moment().toISOString() }}
+    }
+    ```
+
+    Results are returned as `{{ queryName.data }}` — an array of matched documents for Find, or a result object for write operations.
+  </Tab>
+  <Tab title="Redis">
+    **Default port:** 6379
+
+    Redis queries are entered as raw Redis commands. Appsmith connects to a single Redis instance or a Redis cluster. Password authentication and TLS are supported.
+
+    **Get a value:**
+
+    ```
+    GET session:{{ currentUser.id }}
+    ```
+
+    **Set a value with expiry:**
+
+    ```
+    SET session:{{ currentUser.id }} {{ JSON.stringify(sessionData) }} EX 3600
+    ```
+
+    **Increment a counter:**
+
+    ```
+    INCR page_views:{{ appsmith.URL.pathname }}
+    ```
+
+    The response is returned as `{{ queryName.data }}` — a string for scalar replies, an array for list/set replies, or `null` when a key does not exist.
+  </Tab>
+</Tabs>
+
+## Using query results in widgets
+
+Bind `{{ queryName.data }}` to any widget that accepts an array:
+
+```javascript
+// Table widget — Data property
+{{ getUserList.data }}
+
+// Select widget — Options property
+{{ getStatuses.data.map(row => ({ label: row.name, value: row.id })) }}
+
+// Text widget — Text property
+{{ "Total: " + getTotals.data[0].count }}
+```js
+
+Set a query to run **on page load** via the query's **Settings** tab so data is pre-populated when the app opens.
+
+## SQL parameterization
+
+All `{{ }}` bindings inside SQL queries are sent as prepared statement parameters. Never concatenate user input directly into a query string.
+
+```sql
+-- Correct — binding is parameterized
+SELECT * FROM accounts WHERE email = {{ emailInput.text }};
+
+-- Incorrect — do not build strings this way
+SELECT * FROM accounts WHERE email = '{{ emailInput.text }}';
+```
+
+## Supported databases
+
+| Plugin | Notes |
+|---|---|
+| PostgreSQL | Full SSL, prepared statements |
+| MySQL | SSH tunnel, connection URI |
+| MongoDB | Form mode and raw shell commands |
+| Microsoft SQL Server | Windows authentication supported |
+| Redis | Single instance and cluster |
+| Elasticsearch | REST-based queries |
+| DynamoDB | AWS credentials or IAM role |
+| Firestore | Service account JSON |
+| Oracle | TNS alias supported |
+| Snowflake | Warehouse, role, schema selection |
+| Redshift | Identical to PostgreSQL plugin |
+| ArangoDB | HTTP API via AQL |
+| Databricks | JDBC connection via personal access token |
+
+For REST-based and SaaS integrations, see [REST API](/datasources/rest-api) and [Google Sheets](/datasources/google-sheets).

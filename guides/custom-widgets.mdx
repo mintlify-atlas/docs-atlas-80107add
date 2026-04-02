@@ -1,0 +1,195 @@
+---
+title: "Custom Widgets"
+description: "Build custom UI components using HTML, CSS, and JavaScript."
+---
+
+The **Custom Widget** runs arbitrary HTML, CSS, and JavaScript inside a sandboxed iframe embedded in the Appsmith canvas. Use it when no built-in widget matches your requirements — custom data visualizations, third-party component libraries, specialized input controls, or any UI that requires direct DOM access.
+
+<Note>
+  The Custom Widget runs in a sandboxed iframe. It cannot access the parent page's DOM, cookies, or local storage. Communication with the rest of your Appsmith app happens exclusively through the `appsmith` bridge object described below.
+</Note>
+
+<Steps>
+  <Step title="Add a Custom Widget to the canvas">
+    Drag the **Custom Widget** from the widget panel onto the canvas. Resize it to fit your intended UI. The widget shows a default HTML template you can replace entirely.
+  </Step>
+
+  <Step title="Write the HTML template">
+    Click **Edit source** to open the Custom Widget editor. Replace the default content with your HTML structure. All HTML, CSS, and JavaScript lives in a single editor with three tabs: **HTML**, **CSS**, and **JS**.
+
+    In the **HTML** tab, define your markup:
+
+    ```html
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+      </head>
+      <body>
+        <canvas id="myChart"></canvas>
+      </body>
+    </html>
+    ```
+
+    Appsmith injects the `appsmith` bridge object automatically — no import is needed.
+  </Step>
+
+  <Step title="Add CSS styling">
+    In the **CSS** tab, add styles scoped to your widget. These styles apply only inside the iframe and do not affect the rest of the Appsmith page:
+
+    ```css
+    body {
+      margin: 0;
+      padding: 8px;
+      font-family: sans-serif;
+      background: transparent;
+    }
+
+    canvas {
+      width: 100% !important;
+      max-height: 400px;
+    }
+    ```
+  </Step>
+
+  <Step title="Receive data from Appsmith using appsmith.model">
+    In the widget's **Default model** property (on the right-hand panel), define the data you want to pass in as JSON:
+
+    ```json
+    {
+      "labels": ["Jan", "Feb", "Mar", "Apr", "May"],
+      "values": [120, 98, 145, 210, 187]
+    }
+    ```
+
+    These values can be bound to query results:
+
+    ```javascript
+    {
+      "labels": {{getMonthlyRevenue.data.map(r => r.month)}},
+      "values": {{getMonthlyRevenue.data.map(r => r.revenue)}}
+    }
+    ```
+
+    In the **JS** tab of the widget editor, access this data through `appsmith.model`:
+
+    ```javascript
+    function renderChart(data) {
+      const ctx = document.getElementById('myChart').getContext('2d');
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Monthly Revenue',
+            data: data.values,
+            backgroundColor: 'rgba(99, 102, 241, 0.6)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' }
+          }
+        }
+      });
+    }
+
+    // appsmith.model is available immediately
+    renderChart(appsmith.model);
+
+    // Re-render whenever Appsmith pushes updated data
+    appsmith.onReady(() => {
+      appsmith.onModelChange((newModel) => {
+        renderChart(newModel);
+      });
+    });
+    ```
+  </Step>
+
+  <Step title="Send events back to Appsmith using appsmith.triggerEvent">
+    Your widget can trigger actions in the parent Appsmith app — running queries, navigating, or showing alerts — by calling `appsmith.triggerEvent`:
+
+    ```javascript
+    document.getElementById('myChart').addEventListener('click', (event) => {
+      const points = chart.getElementsAtEventForMode(
+        event, 'nearest', { intersect: true }, true
+      );
+
+      if (points.length > 0) {
+        const index = points[0].index;
+        appsmith.triggerEvent('onDataPointClick', {
+          label: appsmith.model.labels[index],
+          value: appsmith.model.values[index]
+        });
+      }
+    });
+    ```
+
+    In the Custom Widget's property panel, the **onDataPointClick** event appears as a configurable event handler. Wire it to any Appsmith action — for example, open a modal with details about the clicked data point.
+  </Step>
+</Steps>
+
+## Complete example: custom Chart.js bar chart
+
+Putting it all together, here is the full JS tab implementation for a Chart.js bar chart that re-renders on data changes and emits click events back to Appsmith:
+
+```javascript
+let chartInstance = null;
+
+function renderChart(model) {
+  const ctx = document.getElementById('myChart').getContext('2d');
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: model.labels,
+      datasets: [{
+        label: model.datasetLabel || 'Data',
+        data: model.values,
+        backgroundColor: 'rgba(99, 102, 241, 0.6)',
+        borderColor: 'rgba(99, 102, 241, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      onClick(event, elements) {
+        if (elements.length > 0) {
+          const i = elements[0].index;
+          appsmith.triggerEvent('onDataPointClick', {
+            label: model.labels[i],
+            value: model.values[i]
+          });
+        }
+      }
+    }
+  });
+}
+
+appsmith.onReady(() => {
+  renderChart(appsmith.model);
+  appsmith.onModelChange(renderChart);
+});
+```js
+
+## Related guides
+
+<CardGroup>
+  <Card title="Building UI" icon="layout" href="/core-concepts/building-ui">
+    Canvas layout, widget properties, and responsive design.
+  </Card>
+  <Card title="Writing JavaScript" icon="code" href="/core-concepts/writing-javascript">
+    JS Objects, async patterns, and widget bindings.
+  </Card>
+  <Card title="AI Integrations" icon="sparkles" href="/guides/ai-integration">
+    Build AI-powered tools with custom input and output widgets.
+  </Card>
+</CardGroup>
